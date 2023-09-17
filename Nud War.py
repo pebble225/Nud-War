@@ -141,6 +141,7 @@ class Nud:
 		updatedAngle = numpy.clip(angle, -self.turnSpeed, self.turnSpeed)
 		turningVector = getAngleVector(updatedAngle)
 		self.rotation = [self.rotation[0]*turningVector[0]-self.rotation[1]*turningVector[1], self.rotation[0]*turningVector[1]+self.rotation[1]*turningVector[0]]
+		self.normalizeRotation()
 
 
 	#Diplomat AI commands
