@@ -1,6 +1,7 @@
 import pygame
 import math
 import numpy
+import random
 
 window = None
 running = True
@@ -77,7 +78,7 @@ class Nud:
 		self.pos = pos
 		self.type = nudType
 		self.rotation = [1.0, 0]
-		self.speed = 10
+		self.speed = 2
 		self.turnSpeed = 3
 		self.orders = []
 
@@ -120,7 +121,7 @@ class Nud:
 		self.pos[1] += self.rotation[1] * distance
 	
 
-	def turn_left(self, degrees):
+	def turn_left(self, degrees: float):
 		if degrees > self.turnSpeed:
 			degrees = self.turnSpeed
 		change = getAngleVector(-degrees)
@@ -128,12 +129,18 @@ class Nud:
 		self.normalizeRotation()
 
 
-	def turn_right(self, degrees):
+	def turn_right(self, degrees: float):
 		if degrees > self.turnSpeed:
 			degrees = self.turnSpeed
 		change = getAngleVector(degrees)
 		self.rotation = [self.rotation[0]*change[0]-self.rotation[1]*change[1], self.rotation[0]*change[1]+self.rotation[1]*change[0]]
 		self.normalizeRotation()
+	
+
+	def turn_by_reference_angle(self, angle: float):
+		updatedAngle = numpy.clip(angle, -self.turnSpeed, self.turnSpeed)
+		turningVector = getAngleVector(updatedAngle)
+		self.rotation = [self.rotation[0]*turningVector[0]-self.rotation[1]*turningVector[1], self.rotation[0]*turningVector[1]+self.rotation[1]*turningVector[0]]
 
 
 	#Diplomat AI commands
@@ -147,6 +154,8 @@ class Nud:
 	def command_addPosition(self, x, y, index = 0):
 		self.orders[index].positions.append([x, y])
 
+GOTO_TARGET_ROTATION_TOLERANCE = 1.0
+
 class SmartNudAI:
 	def UpdateNud(nud):
 		if len(nud.orders) > 0:
@@ -154,15 +163,25 @@ class SmartNudAI:
 
 
 	def GOTO(nud):
-		GOTO_TARGET_RANGE = 2
+		global GOTO_TARGET_ROTATION_TOLERANCE
 
 		if len(nud.orders[0].positions) < 1:
 			print("A goto order was given without a position.")
 			return
 		
 		targetPos = nud.orders[0].positions[0]
+		targetDistance = numpy.sqrt((nud.pos[0] - targetPos[0]) ** 2 + (nud.pos[1] - targetPos[1]) ** 2)
+		targetVector = getAngleVectorToPoint(nud.pos, targetPos)
+		differenceAngle = getVectorAngleDifference(nud.rotation, targetVector) * 180 / numpy.pi
 
-		
+		if PointsInRange(nud.pos, targetPos):
+			print("command complete!")
+			nud.orders.pop(0)
+			return
+		if differenceAngle < -GOTO_TARGET_ROTATION_TOLERANCE or differenceAngle > GOTO_TARGET_ROTATION_TOLERANCE:
+			nud.turn_by_reference_angle(differenceAngle)
+			return
+		nud.move_forward(targetDistance)
 		
 
 
@@ -173,29 +192,31 @@ class DumbNudAI:
 Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.GOTO
 
 
-def PointsInRange(pos1, pos2, tolerance, d = -1):
-	if d == -1:
-		d = math.sqrt((pos2[0]-pos1[0])*(pos2[0]-pos1[0]) + (pos2[1]-pos1[1])*(pos2[1]-pos1[1]))
-	#floating points maaaan
-	return d < tolerance
+def PointsInRange(pos1: tuple[float, float], pos2: tuple[float, float], tolerance: float = 0.1):
+	return pos1[0] > pos2[0] - tolerance and pos1[0] < pos2[0] + tolerance and pos1[1] > pos2[1] - tolerance and pos1[1] < pos2[1] + tolerance
 
 
-def getAngleToPoint(origin: tuple[float, float], target: tuple[float, float], d = -1):
-	if d == -1:
-		d = math.sqrt((target[0]-origin[0])*(target[0]-origin[0]) + (target[1]-origin[1])*(target[1]-origin[1]))
-	diff = target[1] - origin[1]
-	return (math.asin(diff / d)*180 / math.pi) % 360
-
-
-def getTargetAngleIsCloserClockwise(r, targetAngle):
-	if r > targetAngle:
-		return r - targetAngle > 180.0
-	else:
-		return targetAngle - r < 180.0
+def getAngleVectorToPoint(originPos: tuple[float, float], targetPos: tuple[float, float]) -> list[float, float]:
+	diffX = targetPos[0] - originPos[0]
+	diffY = targetPos[1] - originPos[1]
+	d = math.sqrt(diffX ** 2 + diffY ** 2)
+	if d == 0:
+		return [1.0, 0.0]
+	return [diffX / d, diffY / d]
 
 
 def getAngleVector(angle: float) -> list[float, float]:
 	return [math.cos(angle*math.pi/180.0), math.sin(angle*math.pi/180.0)]
+
+
+"""
+
+Moderately understood use of trigonometery to get the angle between two vectors.
+ArcTan2 is used to avoid extremely large values associated with Tangent.
+
+"""
+def getVectorAngleDifference(vec1: tuple[float, float], vec2: tuple[float, float]) -> float:
+	return numpy.arctan2(vec1[0]*vec2[1]-vec1[1]*vec2[0], vec1[0]*vec2[0]+vec1[1]*vec2[1])
 
 
 def Input():
@@ -207,20 +228,21 @@ def Input():
 
 
 fac = None
-n = None
 
 def Start():
-	global instance, fac, n
+	global instance, fac, n, dim
 
 	fac = Faction("Mythria", (0,100,255))
 
-	n = Nud(fac, [100, 100], 0)
+	for i in range(0, 100, 1):
+		n = Nud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])], 0)
+		instance.append(n)
 
-	n.command(Order.TYPE_GOTO)
-	n.command_addPosition(800, 400)
+		n.command(Order.TYPE_GOTO)
+		n.command_addPosition(random.randint(0, dim[0]), random.randint(0, dim[1]))
 
 def Update():
-	global instance, n
+	global instance
 
 	#step 1: Run spatial abstract to update nud math (might not need this step)
 
@@ -228,7 +250,8 @@ def Update():
 
 	#step 3: run the Nud AI and Dumb AI
 
-	SmartNudAI.UpdateNud(n)
+	for nud in instance:
+		SmartNudAI.UpdateNud(nud)
 
 
 def Render():
@@ -236,7 +259,8 @@ def Render():
 
 	window.fill((0, 0, 0))
 
-	n.Render()
+	for nud in instance:
+		nud.Render()
 
 	pygame.display.flip()
 
