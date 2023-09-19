@@ -111,38 +111,6 @@ class Nud:
 		d = math.sqrt(self.rotation[0] ** 2 + self.rotation[1] ** 2)
 		self.rotation = [self.rotation[0] / d, self.rotation[1] / d]
 
-	#Nud AI commands
-	
-	def move_forward(self, distance):
-		if distance > self.speed:
-			distance = self.speed
-		
-		self.pos[0] += self.rotation[0] * distance
-		self.pos[1] += self.rotation[1] * distance
-	
-
-	def turn_left(self, degrees: float):
-		if degrees > self.turnSpeed:
-			degrees = self.turnSpeed
-		change = getAngleVector(-degrees)
-		self.rotation = [self.rotation[0]*change[0]-self.rotation[1]*change[1], self.rotation[0]*change[1]+self.rotation[1]*change[0]]
-		self.normalizeRotation()
-
-
-	def turn_right(self, degrees: float):
-		if degrees > self.turnSpeed:
-			degrees = self.turnSpeed
-		change = getAngleVector(degrees)
-		self.rotation = [self.rotation[0]*change[0]-self.rotation[1]*change[1], self.rotation[0]*change[1]+self.rotation[1]*change[0]]
-		self.normalizeRotation()
-	
-
-	def turn_by_reference_angle(self, angle: float):
-		updatedAngle = numpy.clip(angle, -self.turnSpeed, self.turnSpeed)
-		turningVector = getAngleVector(updatedAngle)
-		self.rotation = [self.rotation[0]*turningVector[0]-self.rotation[1]*turningVector[1], self.rotation[0]*turningVector[1]+self.rotation[1]*turningVector[0]]
-		self.normalizeRotation()
-
 
 	#Diplomat AI commands
 	
@@ -163,7 +131,7 @@ class SmartNudAI:
 			Order.Lookup[nud.orders[0].orderType](nud)
 
 
-	def GOTO(nud):
+	def GOTO(nud: Nud):
 		global GOTO_TARGET_ROTATION_TOLERANCE
 
 		if len(nud.orders[0].positions) < 1:
@@ -176,13 +144,42 @@ class SmartNudAI:
 		differenceAngle = getVectorAngleDifference(nud.rotation, targetVector) * 180 / numpy.pi
 
 		if PointsInRange(nud.pos, targetPos):
-			print("command complete!")
 			nud.orders.pop(0)
 			return
 		if differenceAngle < -GOTO_TARGET_ROTATION_TOLERANCE or differenceAngle > GOTO_TARGET_ROTATION_TOLERANCE:
-			nud.turn_by_reference_angle(differenceAngle)
+			SmartNudAI.turn_by_reference_angle(nud, differenceAngle)
 			return
-		nud.move_forward(targetDistance)
+		SmartNudAI.move_forward(nud, targetDistance)
+	
+	def move_forward(nud: Nud, distance):
+		if distance > nud.speed:
+			distance = nud.speed
+		
+		nud.pos[0] += nud.rotation[0] * distance
+		nud.pos[1] += nud.rotation[1] * distance
+	
+
+	def turn_left(nud: Nud, degrees: float):
+		if degrees > nud.turnSpeed:
+			degrees = nud.turnSpeed
+		change = getAngleVector(-degrees)
+		nud.rotation = [nud.rotation[0]*change[0]-nud.rotation[1]*change[1], nud.rotation[0]*change[1]+nud.rotation[1]*change[0]]
+		nud.normalizeRotation()
+
+
+	def turn_right(nud: Nud, degrees: float):
+		if degrees > nud.turnSpeed:
+			degrees = nud.turnSpeed
+		change = getAngleVector(degrees)
+		nud.rotation = [nud.rotation[0]*change[0]-nud.rotation[1]*change[1], nud.rotation[0]*change[1]+nud.rotation[1]*change[0]]
+		nud.normalizeRotation()
+	
+
+	def turn_by_reference_angle(nud: Nud, angle: float):
+		updatedAngle = numpy.clip(angle, -nud.turnSpeed, nud.turnSpeed)
+		turningVector = getAngleVector(updatedAngle)
+		nud.rotation = [nud.rotation[0]*turningVector[0]-nud.rotation[1]*turningVector[1], nud.rotation[0]*turningVector[1]+nud.rotation[1]*turningVector[0]]
+		nud.normalizeRotation()
 		
 
 
