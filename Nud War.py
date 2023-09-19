@@ -24,7 +24,7 @@ class Mesh:
 
 	"""
 
-	def getStandardNud():
+	def GetStandardNud():
 		return [
 			[1.0, 0], [-1.0, 1.0], [-0.5, 0], [-1.0, -1.0]
 		]
@@ -42,6 +42,8 @@ class Faction:
 
 
 class Order:
+
+	#maybe make the constants more pythonic eventually
 	TYPE_GOTO = 0
 	TYPE_GOTO_RELATIVE = 1
 
@@ -58,16 +60,22 @@ class Order:
 		self.positions = []
 		self.targets = []
 	
-	def setType(self, orderType):
+
+	#functions that directly change data in class will stay
+	def SetType(self, orderType):
 		self.orderType = orderType
 	
 
-	def addPosition(self, x, y):
+	def AddPosition(self, x, y):
 		self.positions.append([x, y])
 	
 
-	def addTarget(self, t):
+	def AddTarget(self, t):
 		self.targets.append(t)
+
+#could this be merged with other classes like Resource?
+class Projectile:
+	pass
 
 
 class Nud:
@@ -83,23 +91,23 @@ class Nud:
 		self.orders = []
 
 
-	def RemoveOrder(self, o):
+class AdminAI:
+	def CommandNud(nud: Nud, orderType):
+		o = Order()
+		o.SetType(orderType)
+		nud.orders.append(o)
+
+
+	def NudCommand_addPosition(self, x, y, index = 0):
+		self.orders[index].positions.append([x, y])
+
+
+	def NudCommand_removeOrder(self, o):
 		if o in self.orders:
 			self.orders.remove(o)
 		else:
 			print("Tried to remove order from Nud that is not in order list.")
 
-
-	#Diplomat AI commands
-	
-	def command(self, orderType):
-		o = Order()
-		o.setType(orderType)
-		self.orders.append(o)
-
-
-	def command_addPosition(self, x, y, index = 0):
-		self.orders[index].positions.append([x, y])
 
 GOTO_TARGET_ROTATION_TOLERANCE = 1.0
 
@@ -109,7 +117,7 @@ class SmartNudAI:
 			Order.Lookup[nud.orders[0].orderType](nud)
 
 
-	def GOTO(nud: Nud):
+	def Goto(nud: Nud):
 		global GOTO_TARGET_ROTATION_TOLERANCE
 
 		if len(nud.orders[0].positions) < 1:
@@ -118,18 +126,18 @@ class SmartNudAI:
 		
 		targetPos = nud.orders[0].positions[0]
 		targetDistance = numpy.sqrt((nud.pos[0] - targetPos[0]) ** 2 + (nud.pos[1] - targetPos[1]) ** 2)
-		targetVector = getAngleVectorToPoint(nud.pos, targetPos)
-		differenceAngle = getVectorAngleDifference(nud.rotation, targetVector) * 180 / numpy.pi
+		targetVector = GetAngleVectorToPoint(nud.pos, targetPos)
+		differenceAngle = GetVectorAngleDifference(nud.rotation, targetVector) * 180 / numpy.pi
 
 		if PointsInRange(nud.pos, targetPos):
 			nud.orders.pop(0)
 			return
 		if differenceAngle < -GOTO_TARGET_ROTATION_TOLERANCE or differenceAngle > GOTO_TARGET_ROTATION_TOLERANCE:
-			SmartNudAI.turn_by_reference_angle(nud, differenceAngle)
+			SmartNudAI.TurnByReferenceAngle(nud, differenceAngle)
 			return
-		SmartNudAI.move_forward(nud, targetDistance)
+		SmartNudAI.MoveForward(nud, targetDistance)
 	
-	def move_forward(nud: Nud, distance):
+	def MoveForward(nud: Nud, distance):
 		if distance > nud.speed:
 			distance = nud.speed
 		
@@ -137,25 +145,25 @@ class SmartNudAI:
 		nud.pos[1] += nud.rotation[1] * distance
 	
 
-	def turn_left(nud: Nud, degrees: float):
+	def TurnLeft(nud: Nud, degrees: float):
 		if degrees > nud.turnSpeed:
 			degrees = nud.turnSpeed
-		change = getAngleVector(-degrees)
+		change = GetAngleVector(-degrees)
 		nud.rotation = [nud.rotation[0]*change[0]-nud.rotation[1]*change[1], nud.rotation[0]*change[1]+nud.rotation[1]*change[0]]
 		Spatial.NormalizeNudRotation(nud)
 
 
-	def turn_right(nud: Nud, degrees: float):
+	def TurnRight(nud: Nud, degrees: float):
 		if degrees > nud.turnSpeed:
 			degrees = nud.turnSpeed
-		change = getAngleVector(degrees)
+		change = GetAngleVector(degrees)
 		nud.rotation = [nud.rotation[0]*change[0]-nud.rotation[1]*change[1], nud.rotation[0]*change[1]+nud.rotation[1]*change[0]]
 		Spatial.NormalizeNudRotation(nud)
 	
 
-	def turn_by_reference_angle(nud: Nud, angle: float):
+	def TurnByReferenceAngle(nud: Nud, angle: float):
 		updatedAngle = numpy.clip(angle, -nud.turnSpeed, nud.turnSpeed)
-		turningVector = getAngleVector(updatedAngle)
+		turningVector = GetAngleVector(updatedAngle)
 		nud.rotation = [nud.rotation[0]*turningVector[0]-nud.rotation[1]*turningVector[1], nud.rotation[0]*turningVector[1]+nud.rotation[1]*turningVector[0]]
 		Spatial.NormalizeNudRotation(nud)
 		
@@ -167,7 +175,7 @@ class DumbNudAI:
 
 class Renderer:
 	def RenderNud(nud: Nud):
-		mesh = Mesh.getStandardNud()
+		mesh = Mesh.GetStandardNud()
 
 		for i in range(0, len(mesh), 1):
 			mesh[i][0] *= Nud.scale
@@ -191,14 +199,14 @@ class Spatial:
 		nud.rotation = [nud.rotation[0] / d, nud.rotation[1] / d]
 
 
-Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.GOTO
+Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.Goto
 
 
 def PointsInRange(pos1: tuple[float, float], pos2: tuple[float, float], tolerance: float = 0.1):
 	return pos1[0] > pos2[0] - tolerance and pos1[0] < pos2[0] + tolerance and pos1[1] > pos2[1] - tolerance and pos1[1] < pos2[1] + tolerance
 
 
-def getAngleVectorToPoint(originPos: tuple[float, float], targetPos: tuple[float, float]) -> list[float, float]:
+def GetAngleVectorToPoint(originPos: tuple[float, float], targetPos: tuple[float, float]) -> list[float, float]:
 	diffX = targetPos[0] - originPos[0]
 	diffY = targetPos[1] - originPos[1]
 	d = math.sqrt(diffX ** 2 + diffY ** 2)
@@ -207,7 +215,7 @@ def getAngleVectorToPoint(originPos: tuple[float, float], targetPos: tuple[float
 	return [diffX / d, diffY / d]
 
 
-def getAngleVector(angle: float) -> list[float, float]:
+def GetAngleVector(angle: float) -> list[float, float]:
 	return [math.cos(angle*math.pi/180.0), math.sin(angle*math.pi/180.0)]
 
 
@@ -217,7 +225,7 @@ Moderately understood use of trigonometery to get the angle between two vectors.
 ArcTan2 is used to avoid extremely large values associated with Tangent.
 
 """
-def getVectorAngleDifference(vec1: tuple[float, float], vec2: tuple[float, float]) -> float:
+def GetVectorAngleDifference(vec1: tuple[float, float], vec2: tuple[float, float]) -> float:
 	return numpy.arctan2(vec1[0]*vec2[1]-vec1[1]*vec2[0], vec1[0]*vec2[0]+vec1[1]*vec2[1])
 
 
@@ -234,14 +242,14 @@ fac = None
 def Start():
 	global instance, fac, n, dim
 
-	fac = Faction("Mythria", (0,100,255))
+	fac = Faction("Team Blue", (0,100,255))
 
 	for i in range(0, 100, 1):
 		n = Nud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])], 0)
 		instance.append(n)
 
-		n.command(Order.TYPE_GOTO)
-		n.command_addPosition(random.randint(0, dim[0]), random.randint(0, dim[1]))
+		AdminAI.CommandNud(n,Order.TYPE_GOTO)
+		AdminAI.NudCommand_addPosition(n, random.randint(0, dim[0]), random.randint(0, dim[1]))
 
 def Update():
 	global instance
