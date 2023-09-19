@@ -82,34 +82,12 @@ class Nud:
 		self.turnSpeed = 3
 		self.orders = []
 
-	def Render(self):
-		mesh = Mesh.getStandardNud()
-
-		for i in range(0, len(mesh), 1):
-			mesh[i][0] *= Nud.scale
-			mesh[i][1] *= Nud.scale
-
-			x1 = mesh[i][0]
-			y1 = mesh[i][1]
-
-			mesh[i][0] = x1*self.rotation[0] - y1*self.rotation[1]
-			mesh[i][1] = y1*self.rotation[0] + x1*self.rotation[1]
-
-			mesh[i][0] += self.pos[0]
-			mesh[i][1] += self.pos[1]
-
-		pygame.draw.polygon(window, self.faction.color, mesh)
-
 
 	def RemoveOrder(self, o):
 		if o in self.orders:
 			self.orders.remove(o)
 		else:
 			print("Tried to remove order from Nud that is not in order list.")
-
-	def normalizeRotation(self):
-		d = math.sqrt(self.rotation[0] ** 2 + self.rotation[1] ** 2)
-		self.rotation = [self.rotation[0] / d, self.rotation[1] / d]
 
 
 	#Diplomat AI commands
@@ -164,7 +142,7 @@ class SmartNudAI:
 			degrees = nud.turnSpeed
 		change = getAngleVector(-degrees)
 		nud.rotation = [nud.rotation[0]*change[0]-nud.rotation[1]*change[1], nud.rotation[0]*change[1]+nud.rotation[1]*change[0]]
-		nud.normalizeRotation()
+		Spatial.NormalizeNudRotation(nud)
 
 
 	def turn_right(nud: Nud, degrees: float):
@@ -172,19 +150,45 @@ class SmartNudAI:
 			degrees = nud.turnSpeed
 		change = getAngleVector(degrees)
 		nud.rotation = [nud.rotation[0]*change[0]-nud.rotation[1]*change[1], nud.rotation[0]*change[1]+nud.rotation[1]*change[0]]
-		nud.normalizeRotation()
+		Spatial.NormalizeNudRotation(nud)
 	
 
 	def turn_by_reference_angle(nud: Nud, angle: float):
 		updatedAngle = numpy.clip(angle, -nud.turnSpeed, nud.turnSpeed)
 		turningVector = getAngleVector(updatedAngle)
 		nud.rotation = [nud.rotation[0]*turningVector[0]-nud.rotation[1]*turningVector[1], nud.rotation[0]*turningVector[1]+nud.rotation[1]*turningVector[0]]
-		nud.normalizeRotation()
+		Spatial.NormalizeNudRotation(nud)
 		
 
 
 class DumbNudAI:
 	pass
+
+
+class Renderer:
+	def RenderNud(nud: Nud):
+		mesh = Mesh.getStandardNud()
+
+		for i in range(0, len(mesh), 1):
+			mesh[i][0] *= Nud.scale
+			mesh[i][1] *= Nud.scale
+
+			x1 = mesh[i][0]
+			y1 = mesh[i][1]
+
+			mesh[i][0] = x1*nud.rotation[0] - y1*nud.rotation[1]
+			mesh[i][1] = y1*nud.rotation[0] + x1*nud.rotation[1]
+
+			mesh[i][0] += nud.pos[0]
+			mesh[i][1] += nud.pos[1]
+
+		pygame.draw.polygon(window, nud.faction.color, mesh)
+
+
+class Spatial:
+	def NormalizeNudRotation(nud: Nud):
+		d = math.sqrt(nud.rotation[0] ** 2 + nud.rotation[1] ** 2)
+		nud.rotation = [nud.rotation[0] / d, nud.rotation[1] / d]
 
 
 Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.GOTO
@@ -258,7 +262,7 @@ def Render():
 	window.fill((0, 0, 0))
 
 	for nud in instance:
-		nud.Render()
+		Renderer.RenderNud(nud)
 
 	pygame.display.flip()
 
