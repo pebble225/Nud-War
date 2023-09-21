@@ -45,7 +45,6 @@ class Order:
 
 	#maybe make the constants more pythonic eventually
 	TYPE_GOTO = 0
-	TYPE_GOTO_RELATIVE = 1
 
 	TYPE_ATTACK = 100
 	
@@ -59,9 +58,10 @@ class Order:
 		self.orderType = None
 		self.positions = []
 		self.targets = []
+		self.distances = []
 	
 
-	#functions that directly change data in class will stay
+	#functions that directly change data in class will stay in that class
 	def SetType(self, orderType):
 		self.orderType = orderType
 	
@@ -79,16 +79,33 @@ class Projectile:
 
 
 class Nud:
-	scale = 5
 
-	def __init__(self, faction, pos, nudType):
+	TYPE_COMBAT = 0
+	TYPE_TRADING = 100
+	TYPE_CONSTRUCTION = 200
+	TYPE_GATHERING = 300
+
+	def __init__(self, faction: Faction, pos: list[float, float], nudType: int):
 		self.faction = faction
 		self.pos = pos
 		self.type = nudType
 		self.rotation = [1.0, 0]
 		self.speed = 2
+		self.scale = 5
 		self.turnSpeed = 3
 		self.orders = []
+
+# I'm divided on doing this way but I don't think Python likes me putting factories in the class definition
+# Factory class exists to keep Nud constructor uncomplicated
+class NudFactory:
+	def CombatNud(faction: Faction, pos: list[float, float]) -> Nud:
+		return Nud(faction, pos, Nud.TYPE_COMBAT)
+	def TradingNud(faction: Faction, pos: list[float, float]) -> Nud:
+		return Nud(faction, pos, Nud.TYPE_TRADING)
+	def ConstructionNud(faction: Faction, pos: list[float, float]) -> Nud:
+		return Nud(faction, pos, Nud.TYPE_CONSTRUCTION)
+	def GatheringNud(faction: Faction, pos: list[float, float]) -> Nud:
+		return Nud(faction, pos, Nud.TYPE_GATHERING)
 
 
 class AdminAI:
@@ -116,6 +133,7 @@ class SmartNudAI:
 		if len(nud.orders) > 0:
 			Order.Lookup[nud.orders[0].orderType](nud)
 
+	# Global Orders
 
 	def Goto(nud: Nud):
 		global GOTO_TARGET_ROTATION_TOLERANCE
@@ -166,11 +184,18 @@ class SmartNudAI:
 		turningVector = GetAngleVector(updatedAngle)
 		nud.rotation = [nud.rotation[0]*turningVector[0]-nud.rotation[1]*turningVector[1], nud.rotation[0]*turningVector[1]+nud.rotation[1]*turningVector[0]]
 		Spatial.NormalizeNudRotation(nud)
+	
+	# Combat Orders
+	# Trade Orders
+	# Build Orders
+	# Gathering Orders
 		
 
 
 class DumbNudAI:
 	pass
+
+Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.Goto
 
 
 class Renderer:
@@ -178,8 +203,8 @@ class Renderer:
 		mesh = Mesh.GetStandardNud()
 
 		for i in range(0, len(mesh), 1):
-			mesh[i][0] *= Nud.scale
-			mesh[i][1] *= Nud.scale
+			mesh[i][0] *= nud.scale
+			mesh[i][1] *= nud.scale
 
 			x1 = mesh[i][0]
 			y1 = mesh[i][1]
@@ -197,9 +222,6 @@ class Spatial:
 	def NormalizeNudRotation(nud: Nud):
 		d = math.sqrt(nud.rotation[0] ** 2 + nud.rotation[1] ** 2)
 		nud.rotation = [nud.rotation[0] / d, nud.rotation[1] / d]
-
-
-Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.Goto
 
 
 def PointsInRange(pos1: tuple[float, float], pos2: tuple[float, float], tolerance: float = 0.1):
@@ -245,11 +267,15 @@ def Start():
 	fac = Faction("Team Blue", (0,100,255))
 
 	for i in range(0, 100, 1):
-		n = Nud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])], 0)
+		#n = Nud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])], 0)
+		n = NudFactory.CombatNud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])])
 		instance.append(n)
 
 		AdminAI.CommandNud(n,Order.TYPE_GOTO)
 		AdminAI.NudCommand_addPosition(n, random.randint(0, dim[0]), random.randint(0, dim[1]))
+
+		AdminAI.CommandNud(n,Order.TYPE_GOTO)
+		AdminAI.NudCommand_addPosition(n, random.randint(0, dim[0]), random.randint(0, dim[1]), 1)
 
 def Update():
 	global instance
