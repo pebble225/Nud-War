@@ -24,9 +24,22 @@ class Mesh:
 
 	"""
 
-	def GetStandardNud():
+	def GetCombatNud():
 		return [
 			[1.0, 0], [-1.0, 1.0], [-0.5, 0], [-1.0, -1.0]
+		]
+	
+	def GetTradingNud():
+		return [
+			[0.5, 1.0], [1.0, 0.0], [0.5, -1.0], [-1.0, -1.0], [-0.5, 0.0], [-1.0, 1.0]
+		]
+	def GetConstructionNud():
+		return [
+			[1.0, 1.0], [1.0, -1.0], [-1.0, -1.0], [-0.5, 0.0], [-1.0, 1.0]
+		]
+	def GetGatheringNud():
+		return [
+			[1.0, 1.0], [1.0, 0.75], [0.5, 0.75], [0.5, -0.75], [1.0, -0.75], [1.0, -1.0], [-1.0, -1.0], [-0.5, 0.0], [-1.0, 1.0]
 		]
 
 
@@ -37,6 +50,13 @@ class Faction:
 		self.id = Faction.nextID
 		self.name = name
 		self.color = color
+
+		self.totalNuds = 0
+		self.totalCombatNuds = 0
+		self.totalTradingNuds = 0
+		self.totalConstructionNuds = 0
+		self.totalGatheringNuds = 0
+		
 
 		Faction.nextID += 1
 
@@ -95,17 +115,18 @@ class Nud:
 		self.turnSpeed = 3
 		self.orders = []
 
-# I'm divided on doing this way but I don't think Python likes me putting factories in the class definition
-# Factory class exists to keep Nud constructor uncomplicated
-class NudFactory:
-	def CombatNud(faction: Faction, pos: list[float, float]) -> Nud:
-		return Nud(faction, pos, Nud.TYPE_COMBAT)
-	def TradingNud(faction: Faction, pos: list[float, float]) -> Nud:
-		return Nud(faction, pos, Nud.TYPE_TRADING)
-	def ConstructionNud(faction: Faction, pos: list[float, float]) -> Nud:
-		return Nud(faction, pos, Nud.TYPE_CONSTRUCTION)
-	def GatheringNud(faction: Faction, pos: list[float, float]) -> Nud:
-		return Nud(faction, pos, Nud.TYPE_GATHERING)
+		#maybe replace if else chain in the future
+
+		if nudType == Nud.TYPE_COMBAT:
+			self.meshFunction = Mesh.GetCombatNud
+		elif nudType == Nud.TYPE_TRADING:
+			self.meshFunction = Mesh.GetTradingNud
+		elif nudType == Nud.TYPE_CONSTRUCTION:
+			self.meshFunction = Mesh.GetConstructionNud
+		elif nudType == Nud.TYPE_GATHERING:
+			self.meshFunction = Mesh.GetGatheringNud
+		else:
+			self.meshFunction = None
 
 
 class AdminAI:
@@ -200,7 +221,7 @@ Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.Goto
 
 class Renderer:
 	def RenderNud(nud: Nud):
-		mesh = Mesh.GetStandardNud()
+		mesh = nud.meshFunction()
 
 		for i in range(0, len(mesh), 1):
 			mesh[i][0] *= nud.scale
@@ -268,7 +289,7 @@ def Start():
 
 	for i in range(0, 100, 1):
 		#n = Nud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])], 0)
-		n = NudFactory.CombatNud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])])
+		n = Nud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])], Nud.TYPE_COMBAT)
 		instance.append(n)
 
 		AdminAI.CommandNud(n,Order.TYPE_GOTO)
@@ -309,13 +330,16 @@ def main():
 	window = pygame.display.set_mode(dim)
 
 	tps = 60
-	ns = 1000 / tps
+	ns = 1000.0 / tps
 
-	delta = 0
+	delta = 0.0
 
 	lastTime = pygame.time.get_ticks()
 
 	Start()
+
+	#yea I don't wanna recaulculate this very specific float value so I'll store it >:(
+	oneFloat = 0.9999999999
 
 	while running:
 		Input()
@@ -324,7 +348,7 @@ def main():
 		delta += (nowTime - lastTime) / ns
 		lastTime = nowTime
 
-		while (delta > 0.9999999):
+		while (delta > oneFloat):
 			Update()
 			delta -= 1.0
 		
