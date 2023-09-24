@@ -332,9 +332,13 @@ def main():
 	tps = 60
 	ns = 1000.0 / tps
 
+	fps = 30
+	frameNS = 1000.0 / fps
+
 	delta = 0.0
 
 	lastTime = pygame.time.get_ticks()
+	lastFrame = pygame.time.get_ticks()
 
 	Start()
 
@@ -352,7 +356,9 @@ def main():
 			Update()
 			delta -= 1.0
 		
-		Render()
+		if pygame.time.get_ticks() - lastFrame > frameNS:
+			Render()
+			lastFrame += frameNS
 
 
 	pygame.quit()
