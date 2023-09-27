@@ -13,8 +13,7 @@ dim = (1600,900)
 GLOBAL_Y_INVERT = -1.0
 
 class Mesh:
-	#factory function ensures a new instance of the mesh that can be adjusted. There is only one mesh so this is the method that will be used
-	#for multiple meshes make mesh class or make a factory function for each mesh
+	#factory function ensures a new instance of the mesh that can be adjusted.
 
 	"""
 	
@@ -28,7 +27,6 @@ class Mesh:
 		return [
 			[1.0, 0], [-1.0, 1.0], [-0.5, 0], [-1.0, -1.0]
 		]
-	
 	def GetTradingNud():
 		return [
 			[0.5, 1.0], [1.0, 0.0], [0.5, -1.0], [-1.0, -1.0], [-0.5, 0.0], [-1.0, 1.0]
@@ -98,8 +96,13 @@ class Projectile:
 	pass
 
 
-class Nud:
+class Camera:
+	pos = [0.0, 0.0]
+	scale = 1.0
+	screenOffset = (dim[0] / 2, dim[1] / 2)
 
+
+class Nud:
 	TYPE_COMBAT = 0
 	TYPE_TRADING = 100
 	TYPE_CONSTRUCTION = 200
@@ -220,7 +223,10 @@ Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.Goto
 
 
 class Renderer:
+	#consider making more generic function to render all meshes
 	def RenderNud(nud: Nud):
+		global GLOBAL_Y_INVERT
+
 		mesh = nud.meshFunction()
 
 		for i in range(0, len(mesh), 1):
@@ -236,13 +242,41 @@ class Renderer:
 			mesh[i][0] += nud.pos[0]
 			mesh[i][1] += nud.pos[1]
 
+			mesh[i][0] -= Camera.pos[0]
+			mesh[i][1] -= Camera.pos[1]
+
+			mesh[i][1] *= GLOBAL_Y_INVERT
+
+			mesh[i][0] *= Camera.scale
+			mesh[i][1] *= Camera.scale
+
+			mesh[i][0] += Camera.screenOffset[0]
+			mesh[i][1] += Camera.screenOffset[1]
+
 		pygame.draw.polygon(window, nud.faction.color, mesh)
 
 
 class Spatial:
+	#Chunk Count describes the width and height of the chunk block. Please keep it even. Pretty please
+	ChunkCount = 40
+	ChunkSize = 1000
+
+	MaxChunkIndex = int(ChunkCount / 2 - 1)
+	MinChunkIndex = int(-ChunkCount / 2)
+
+	chunks = {}
+
+	def InitializeChunks():
+		for y in numpy.arange(-Spatial.ChunkCount/2, Spatial.ChunkCount/2, 1):
+			for x in numpy.arange(-Spatial.ChunkCount/2, Spatial.ChunkCount/2, 1):
+				Spatial.chunks[(x, y)] = []
+
 	def NormalizeNudRotation(nud: Nud):
 		d = math.sqrt(nud.rotation[0] ** 2 + nud.rotation[1] ** 2)
 		nud.rotation = [nud.rotation[0] / d, nud.rotation[1] / d]
+
+	def GetChunkCoordinate(pos: list[float, float]) -> tuple[int, int]:
+		return (int(MoveValueLeft(pos[0], Spatial.ChunkSize) / Spatial.ChunkSize), int(MoveValueLeft(pos[1], Spatial.ChunkSize) / Spatial.ChunkSize))
 
 
 def PointsInRange(pos1: tuple[float, float], pos2: tuple[float, float], tolerance: float = 0.1):
@@ -260,6 +294,10 @@ def GetAngleVectorToPoint(originPos: tuple[float, float], targetPos: tuple[float
 
 def GetAngleVector(angle: float) -> list[float, float]:
 	return [math.cos(angle*math.pi/180.0), math.sin(angle*math.pi/180.0)]
+
+
+def MoveValueLeft(n: float, g: int) -> float:
+	return n - (n % g)
 
 
 """
@@ -285,18 +323,22 @@ fac = None
 def Start():
 	global instance, fac, n, dim
 
+	Spatial.InitializeChunks()
+
 	fac = Faction("Team Blue", (0,100,255))
+
+	print(Spatial.GetChunkCoordinate((1024.0, -35.0)))
 
 	for i in range(0, 100, 1):
 		#n = Nud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])], 0)
-		n = Nud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])], Nud.TYPE_COMBAT)
+		n = Nud(fac, [random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2)], Nud.TYPE_COMBAT)
 		instance.append(n)
 
 		AdminAI.CommandNud(n,Order.TYPE_GOTO)
-		AdminAI.NudCommand_addPosition(n, random.randint(0, dim[0]), random.randint(0, dim[1]))
+		AdminAI.NudCommand_addPosition(n, random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2))
 
 		AdminAI.CommandNud(n,Order.TYPE_GOTO)
-		AdminAI.NudCommand_addPosition(n, random.randint(0, dim[0]), random.randint(0, dim[1]), 1)
+		AdminAI.NudCommand_addPosition(n, random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2), 1)
 
 def Update():
 	global instance
