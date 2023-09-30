@@ -117,6 +117,8 @@ class Nud:
 		self.scale = 5
 		self.turnSpeed = 3
 		self.orders = []
+		self.currentChunk = None
+		self.targetChunk = None
 
 		#maybe replace if else chain in the future
 
@@ -266,6 +268,16 @@ class Spatial:
 
 	chunks = {}
 
+	NudChunkShiftQueue = []
+
+	def AppendNud(nud: Nud):
+		Spatial.NudChunkShiftQueue.append(nud)
+
+	def ShiftNudChunks():
+		for nud in Spatial.NudChunkShiftQueue:
+			if nud.currentChunk == None:
+				nud.currentChunk = Spatial.GetChunkCoordinate(nud.pos)
+
 	def InitializeChunks():
 		for y in numpy.arange(-Spatial.ChunkCount/2, Spatial.ChunkCount/2, 1):
 			for x in numpy.arange(-Spatial.ChunkCount/2, Spatial.ChunkCount/2, 1):
@@ -327,21 +339,23 @@ def Start():
 
 	fac = Faction("Team Blue", (0,100,255))
 
-	print(Spatial.GetChunkCoordinate((1024.0, -35.0)))
-
 	for i in range(0, 100, 1):
-		#n = Nud(fac, [random.randint(0, dim[0]), random.randint(0, dim[1])], 0)
 		n = Nud(fac, [random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2)], Nud.TYPE_COMBAT)
-		instance.append(n)
+		#instance.append(n)
+		Spatial.AppendNud(n)
 
 		AdminAI.CommandNud(n,Order.TYPE_GOTO)
 		AdminAI.NudCommand_addPosition(n, random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2))
 
 		AdminAI.CommandNud(n,Order.TYPE_GOTO)
 		AdminAI.NudCommand_addPosition(n, random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2), 1)
+	
+	Spatial.ShiftNudChunks()
 
 def Update():
 	global instance
+
+	Spatial.ShiftNudChunks()
 
 	#step 1: Run spatial abstract to update nud math (might not need this step)
 
