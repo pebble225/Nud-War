@@ -6,7 +6,7 @@ import random
 window = None
 running = True
 
-instance = []
+NudInstance = []
 
 dim = (1600,900)
 
@@ -108,6 +108,8 @@ class Nud:
 	TYPE_CONSTRUCTION = 200
 	TYPE_GATHERING = 300
 
+	NEXT_NUD_ID = 0
+
 	def __init__(self, faction: Faction, pos: list[float, float], nudType: int):
 		self.faction = faction
 		self.pos = pos
@@ -119,6 +121,8 @@ class Nud:
 		self.orders = []
 		self.currentChunk = None
 		self.targetChunk = None
+		self.ID = Nud.NEXT_NUD_ID
+		Nud.NEXT_NUD_ID += 1
 
 		#maybe replace if else chain in the future
 
@@ -180,6 +184,13 @@ class SmartNudAI:
 			SmartNudAI.TurnByReferenceAngle(nud, differenceAngle)
 			return
 		SmartNudAI.MoveForward(nud, targetDistance)
+
+	def DetermineNudChunkChange(nud: Nud):
+		chunk = Spatial.GetChunkCoordinate(nud.pos)
+		if chunk != nud.currentChunk:
+			nud.targetChunk = chunk
+			print("IN\tID: {2}, Current: {0}, Target: {1}".format(nud.currentChunk, nud.targetChunk, nud.ID))
+			Spatial.AppendNud(nud)
 	
 	def MoveForward(nud: Nud, distance):
 		if distance > nud.speed:
@@ -187,6 +198,8 @@ class SmartNudAI:
 		
 		nud.pos[0] += nud.rotation[0] * distance
 		nud.pos[1] += nud.rotation[1] * distance
+
+		SmartNudAI.DetermineNudChunkChange(nud)
 	
 
 	def TurnLeft(nud: Nud, degrees: float):
@@ -227,7 +240,7 @@ Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.Goto
 class Renderer:
 	#consider making more generic function to render all meshes
 	def RenderNud(nud: Nud):
-		global GLOBAL_Y_INVERT
+		global GLOBAL_Y_INVERT 
 
 		mesh = nud.meshFunction()
 
@@ -273,10 +286,20 @@ class Spatial:
 	def AppendNud(nud: Nud):
 		Spatial.NudChunkShiftQueue.append(nud)
 
+	#there are currently no handles for nuds outside of chunks, so if an invalid position is used to look up, it will return a KeyError
 	def ShiftNudChunks():
 		for nud in Spatial.NudChunkShiftQueue:
-			if nud.currentChunk == None:
-				nud.currentChunk = Spatial.GetChunkCoordinate(nud.pos)
+			print("OUT\tID: {2}, Current: {0}, Target: {1}".format(nud.currentChunk, nud.targetChunk, nud.ID))
+			Spatial.chunks[nud.targetChunk].append(nud)
+			Spatial.chunks[nud.currentChunk].remove(nud)
+			nud.currentChunk = nud.targetChunk
+			nud.targetChunk = None
+			Spatial.NudChunkShiftQueue.remove(nud)
+
+	#this should only be used for newly initialized nuds
+	def AssignNudToChunk(nud:Nud):
+		nud.currentChunk = Spatial.GetChunkCoordinate(nud.pos)
+		Spatial.chunks[nud.currentChunk].append(nud)
 
 	def InitializeChunks():
 		for y in numpy.arange(-Spatial.ChunkCount/2, Spatial.ChunkCount/2, 1):
@@ -333,7 +356,7 @@ def Input():
 fac = None
 
 def Start():
-	global instance, fac, n, dim
+	global NudInstance, fac, n, dim
 
 	Spatial.InitializeChunks()
 
@@ -341,8 +364,8 @@ def Start():
 
 	for i in range(0, 100, 1):
 		n = Nud(fac, [random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2)], Nud.TYPE_COMBAT)
-		#instance.append(n)
-		Spatial.AppendNud(n)
+		NudInstance.append(n)
+		Spatial.AssignNudToChunk(n)
 
 		AdminAI.CommandNud(n,Order.TYPE_GOTO)
 		AdminAI.NudCommand_addPosition(n, random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2))
@@ -353,7 +376,7 @@ def Start():
 	Spatial.ShiftNudChunks()
 
 def Update():
-	global instance
+	global NudInstance
 
 	Spatial.ShiftNudChunks()
 
@@ -363,18 +386,22 @@ def Update():
 
 	#step 3: run the Nud AI and Dumb AI
 
-	for nud in instance:
+	for nud in NudInstance:
 		SmartNudAI.UpdateNud(nud)
-
+		
 
 def Render():
-	global window, instance, fac, n
+	global window, NudInstance, fac, n
 
 	window.fill((0, 0, 0))
 
-	for nud in instance:
+	for nud in Spatial.chunks[(0,0)]:
 		Renderer.RenderNud(nud)
 
+	"""
+	for nud in NudInstance:
+		Renderer.RenderNud(nud)
+	"""
 	pygame.display.flip()
 
 
