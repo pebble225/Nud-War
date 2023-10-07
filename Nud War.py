@@ -189,7 +189,6 @@ class SmartNudAI:
 		chunk = Spatial.GetChunkCoordinate(nud.pos)
 		if chunk != nud.currentChunk:
 			nud.targetChunk = chunk
-			print("IN\tID: {2}, Current: {0}, Target: {1}".format(nud.currentChunk, nud.targetChunk, nud.ID))
 			Spatial.AppendNud(nud)
 	
 	def MoveForward(nud: Nud, distance):
@@ -238,6 +237,17 @@ Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.Goto
 
 
 class Renderer:
+	def RenderChunksNearCamera():
+		CAMERA_CHUNK_RANGE = 3
+
+		cameraChunk = Spatial.GetChunkCoordinate(Camera.pos)
+
+		for y in range(cameraChunk[1]-CAMERA_CHUNK_RANGE, cameraChunk[1]+CAMERA_CHUNK_RANGE, 1):
+			for x in range(cameraChunk[0]-CAMERA_CHUNK_RANGE, cameraChunk[0]+CAMERA_CHUNK_RANGE, 1):
+				if Spatial.isValidChunk((x, y)):
+					for nud in Spatial.chunks[(x, y)]:
+						Renderer.RenderNud(nud)
+
 	#consider making more generic function to render all meshes
 	def RenderNud(nud: Nud):
 		global GLOBAL_Y_INVERT 
@@ -283,18 +293,25 @@ class Spatial:
 
 	NudChunkShiftQueue = []
 
+	def isValidChunk(chunk: tuple[int, int]) -> bool:
+		if chunk[0] < Spatial.MinChunkIndex or chunk[0] > Spatial.MaxChunkIndex:
+			return False
+		elif chunk[1] < Spatial.MinChunkIndex or chunk[1] > Spatial.MaxChunkIndex:
+			return False
+		else:
+			return True
+
 	def AppendNud(nud: Nud):
 		Spatial.NudChunkShiftQueue.append(nud)
 
 	#there are currently no handles for nuds outside of chunks, so if an invalid position is used to look up, it will return a KeyError
 	def ShiftNudChunks():
 		for nud in Spatial.NudChunkShiftQueue:
-			print("OUT\tID: {2}, Current: {0}, Target: {1}".format(nud.currentChunk, nud.targetChunk, nud.ID))
 			Spatial.chunks[nud.targetChunk].append(nud)
 			Spatial.chunks[nud.currentChunk].remove(nud)
 			nud.currentChunk = nud.targetChunk
 			nud.targetChunk = None
-			Spatial.NudChunkShiftQueue.remove(nud)
+		Spatial.NudChunkShiftQueue = []
 
 	#this should only be used for newly initialized nuds
 	def AssignNudToChunk(nud:Nud):
@@ -395,8 +412,7 @@ def Render():
 
 	window.fill((0, 0, 0))
 
-	for nud in Spatial.chunks[(0,0)]:
-		Renderer.RenderNud(nud)
+	Renderer.RenderChunksNearCamera()
 
 	"""
 	for nud in NudInstance:
