@@ -39,6 +39,10 @@ class Mesh:
 		return [
 			[1.0, 1.0], [1.0, 0.75], [0.5, 0.75], [0.5, -0.75], [1.0, -0.75], [1.0, -1.0], [-1.0, -1.0], [-0.5, 0.0], [-1.0, 1.0]
 		]
+	def GetRock():
+		return [
+			[1.0, 1.0], [0.6, 0.3], [0.6, -0.3], [1.0, -1.0], [0.3, -0.6], [-0.3, -0.6], [-1.0, -1.0], [-0.6, -0.3], [-0.6, 0.3], [-1.0, 1.0], [-0.3, 0.6]
+		]
 
 
 class Faction:
@@ -91,7 +95,29 @@ class Order:
 	def AddTarget(self, t):
 		self.targets.append(t)
 
-#could this be merged with other classes like Resource?
+
+class Rock:
+	GlobalAngleOffset = [1.0, 0.0]
+
+	CurrentTotalRocks = 0
+
+	ROCK_DENSITY = 10
+	ROCK_TOTAL = None
+	ROCK_SPAWN_DELAY = 30
+
+	RockTimer = 0
+
+	def __init__(self, pos):
+		self.transform = Transform(pos, [1.0, 0.0], [5.0, 5.0], [100, 100, 100])
+		self.transform.meshFunction = Mesh.GetRock
+
+		Rock.CurrentTotalRocks += 1
+
+	
+	#Desire to practice avoiding two way referencing
+	def SetRockTotal(total: int):
+		Rock.ROCK_TOTAL = total
+
 class Projectile:
 	pass
 
@@ -100,6 +126,15 @@ class Camera:
 	pos = [0.0, 0.0]
 	scale = 1.0
 	screenOffset = (dim[0] / 2, dim[1] / 2)
+
+
+class Transform:
+	def __init__(self, pos: list[float, float], rotation: list[float, float], scale: list[float, float], color: list[int, int, int]):
+		self.pos = pos
+		self.rotation = rotation
+		self.scale = scale
+		self.meshFunction = None
+		self.color = color
 
 
 class Nud:
@@ -112,11 +147,10 @@ class Nud:
 
 	def __init__(self, faction: Faction, pos: list[float, float], nudType: int):
 		self.faction = faction
-		self.pos = pos
 		self.type = nudType
-		self.rotation = [1.0, 0]
+
+		self.transform = Transform(pos, [1.0, 0.0], [5.0, 5.0], faction.color)
 		self.speed = 2
-		self.scale = 5
 		self.turnSpeed = 3
 		self.orders = []
 		self.currentChunk = None
@@ -127,13 +161,13 @@ class Nud:
 		#maybe replace if else chain in the future
 
 		if nudType == Nud.TYPE_COMBAT:
-			self.meshFunction = Mesh.GetCombatNud
+			self.transform.meshFunction = Mesh.GetCombatNud
 		elif nudType == Nud.TYPE_TRADING:
-			self.meshFunction = Mesh.GetTradingNud
+			self.transform.meshFunction = Mesh.GetTradingNud
 		elif nudType == Nud.TYPE_CONSTRUCTION:
-			self.meshFunction = Mesh.GetConstructionNud
+			self.transform.meshFunction = Mesh.GetConstructionNud
 		elif nudType == Nud.TYPE_GATHERING:
-			self.meshFunction = Mesh.GetGatheringNud
+			self.transform.meshFunction = Mesh.GetGatheringNud
 		else:
 			self.meshFunction = None
 
@@ -145,13 +179,13 @@ class AdminAI:
 		nud.orders.append(o)
 
 
-	def NudCommand_addPosition(self, x, y, index = 0):
-		self.orders[index].positions.append([x, y])
+	def NudCommand_addPosition(nud, x, y, index = 0):
+		nud.orders[index].positions.append([x, y])
 
 
-	def NudCommand_removeOrder(self, o):
-		if o in self.orders:
-			self.orders.remove(o)
+	def NudCommand_removeOrder(nud, o):
+		if o in nud.orders:
+			nud.orders.remove(o)
 		else:
 			print("Tried to remove order from Nud that is not in order list.")
 
@@ -173,11 +207,11 @@ class SmartNudAI:
 			return
 		
 		targetPos = nud.orders[0].positions[0]
-		targetDistance = numpy.sqrt((nud.pos[0] - targetPos[0]) ** 2 + (nud.pos[1] - targetPos[1]) ** 2)
-		targetVector = GetAngleVectorToPoint(nud.pos, targetPos)
-		differenceAngle = GetVectorAngleDifference(nud.rotation, targetVector) * 180 / numpy.pi
+		targetDistance = numpy.sqrt((nud.transform.pos[0] - targetPos[0]) ** 2 + (nud.transform.pos[1] - targetPos[1]) ** 2)
+		targetVector = GetAngleVectorToPoint(nud.transform.pos, targetPos)
+		differenceAngle = GetVectorAngleDifference(nud.transform.rotation, targetVector) * 180 / numpy.pi
 
-		if PointsInRange(nud.pos, targetPos):
+		if PointsInRange(nud.transform.pos, targetPos):
 			nud.orders.pop(0)
 			return
 		if differenceAngle < -GOTO_TARGET_ROTATION_TOLERANCE or differenceAngle > GOTO_TARGET_ROTATION_TOLERANCE:
@@ -186,7 +220,7 @@ class SmartNudAI:
 		SmartNudAI.MoveForward(nud, targetDistance)
 
 	def DetermineNudChunkChange(nud: Nud):
-		chunk = Spatial.GetChunkCoordinate(nud.pos)
+		chunk = Spatial.GetChunkCoordinate(nud.transform.pos)
 		if chunk != nud.currentChunk:
 			nud.targetChunk = chunk
 			Spatial.AppendNud(nud)
@@ -195,8 +229,8 @@ class SmartNudAI:
 		if distance > nud.speed:
 			distance = nud.speed
 		
-		nud.pos[0] += nud.rotation[0] * distance
-		nud.pos[1] += nud.rotation[1] * distance
+		nud.transform.pos[0] += nud.transform.rotation[0] * distance
+		nud.transform.pos[1] += nud.transform.rotation[1] * distance
 
 		SmartNudAI.DetermineNudChunkChange(nud)
 	
@@ -205,7 +239,7 @@ class SmartNudAI:
 		if degrees > nud.turnSpeed:
 			degrees = nud.turnSpeed
 		change = GetAngleVector(-degrees)
-		nud.rotation = [nud.rotation[0]*change[0]-nud.rotation[1]*change[1], nud.rotation[0]*change[1]+nud.rotation[1]*change[0]]
+		nud.transform.rotation = [nud.transform.rotation[0]*change[0]-nud.transform.rotation[1]*change[1], nud.transform.rotation[0]*change[1]+nud.transform.rotation[1]*change[0]]
 		Spatial.NormalizeNudRotation(nud)
 
 
@@ -213,14 +247,14 @@ class SmartNudAI:
 		if degrees > nud.turnSpeed:
 			degrees = nud.turnSpeed
 		change = GetAngleVector(degrees)
-		nud.rotation = [nud.rotation[0]*change[0]-nud.rotation[1]*change[1], nud.rotation[0]*change[1]+nud.rotation[1]*change[0]]
+		nud.transform.rotation = [nud.transform.rotation[0]*change[0]-nud.transform.rotation[1]*change[1], nud.transform.rotation[0]*change[1]+nud.transform.rotation[1]*change[0]]
 		Spatial.NormalizeNudRotation(nud)
 	
 
 	def TurnByReferenceAngle(nud: Nud, angle: float):
 		updatedAngle = numpy.clip(angle, -nud.turnSpeed, nud.turnSpeed)
 		turningVector = GetAngleVector(updatedAngle)
-		nud.rotation = [nud.rotation[0]*turningVector[0]-nud.rotation[1]*turningVector[1], nud.rotation[0]*turningVector[1]+nud.rotation[1]*turningVector[0]]
+		nud.transform.rotation = [nud.transform.rotation[0]*turningVector[0]-nud.transform.rotation[1]*turningVector[1], nud.transform.rotation[0]*turningVector[1]+nud.transform.rotation[1]*turningVector[0]]
 		Spatial.NormalizeNudRotation(nud)
 	
 	# Combat Orders
@@ -236,6 +270,7 @@ class DumbNudAI:
 Order.Lookup[Order.TYPE_GOTO] = SmartNudAI.Goto
 
 
+
 class Renderer:
 	def RenderChunksNearCamera():
 		CAMERA_CHUNK_RANGE = 3
@@ -245,27 +280,26 @@ class Renderer:
 		for y in range(cameraChunk[1]-CAMERA_CHUNK_RANGE, cameraChunk[1]+CAMERA_CHUNK_RANGE, 1):
 			for x in range(cameraChunk[0]-CAMERA_CHUNK_RANGE, cameraChunk[0]+CAMERA_CHUNK_RANGE, 1):
 				if Spatial.isValidChunk((x, y)):
-					for nud in Spatial.chunks[(x, y)]:
-						Renderer.RenderNud(nud)
+					for obj in Spatial.chunks[(x, y)]:
+						Renderer.RenderTransform(obj.transform)
 
-	#consider making more generic function to render all meshes
-	def RenderNud(nud: Nud):
+	def RenderTransform(transform: Transform):
 		global GLOBAL_Y_INVERT 
 
-		mesh = nud.meshFunction()
+		mesh = transform.meshFunction()
 
 		for i in range(0, len(mesh), 1):
-			mesh[i][0] *= nud.scale
-			mesh[i][1] *= nud.scale
+			mesh[i][0] *= transform.scale[0]
+			mesh[i][1] *= transform.scale[1]
 
 			x1 = mesh[i][0]
 			y1 = mesh[i][1]
 
-			mesh[i][0] = x1*nud.rotation[0] - y1*nud.rotation[1]
-			mesh[i][1] = y1*nud.rotation[0] + x1*nud.rotation[1]
+			mesh[i][0] = x1*transform.rotation[0] - y1*transform.rotation[1]
+			mesh[i][1] = y1*transform.rotation[0] + x1*transform.rotation[1]
 
-			mesh[i][0] += nud.pos[0]
-			mesh[i][1] += nud.pos[1]
+			mesh[i][0] += transform.pos[0]
+			mesh[i][1] += transform.pos[1]
 
 			mesh[i][0] -= Camera.pos[0]
 			mesh[i][1] -= Camera.pos[1]
@@ -278,25 +312,47 @@ class Renderer:
 			mesh[i][0] += Camera.screenOffset[0]
 			mesh[i][1] += Camera.screenOffset[1]
 
-		pygame.draw.polygon(window, nud.faction.color, mesh)
+		pygame.draw.polygon(window, transform.color, mesh)
 
 
 class Spatial:
 	#Chunk Count describes the width and height of the chunk block. Please keep it even. Pretty please
 	ChunkCount = 40
 	ChunkSize = 1000
-
-	MaxChunkIndex = int(ChunkCount / 2 - 1)
-	MinChunkIndex = int(-ChunkCount / 2)
+	MaxLeft = 0
+	MaxRight = ChunkCount*ChunkSize-1
+	MaxUp = ChunkCount*ChunkSize-1
+	MaxDown = 0
 
 	chunks = {}
 
 	NudChunkShiftQueue = []
 
+	#hmmm bloat all of the operators with start and update functions?
+	def Start():
+		Spatial.InitializeChunks()
+
+		Rock.SetRockTotal(Rock.ROCK_DENSITY * Spatial.ChunkCount * Spatial.ChunkCount)
+
+
+	def Update():
+		Spatial.ShiftNudChunks()
+
+		Rock.RockTimer += 1
+
+		if Rock.RockTimer >= Rock.ROCK_SPAWN_DELAY:
+			Rock.RockTimer -= Rock.ROCK_SPAWN_DELAY
+			if Rock.CurrentTotalRocks < Rock.ROCK_TOTAL:
+				rock = Rock((random.randrange(Spatial.MaxLeft, Spatial.MaxRight), random.randrange(Spatial.MaxUp)))
+				Spatial.AssignStationaryToChunk(rock)
+				print(Rock.CurrentTotalRocks)
+			
+
+
 	def isValidChunk(chunk: tuple[int, int]) -> bool:
-		if chunk[0] < Spatial.MinChunkIndex or chunk[0] > Spatial.MaxChunkIndex:
+		if chunk[0] < 0 or chunk[0] > Spatial.ChunkCount-1:
 			return False
-		elif chunk[1] < Spatial.MinChunkIndex or chunk[1] > Spatial.MaxChunkIndex:
+		elif chunk[1] < 0 or chunk[1] > Spatial.ChunkCount-1:
 			return False
 		else:
 			return True
@@ -315,17 +371,27 @@ class Spatial:
 
 	#this should only be used for newly initialized nuds
 	def AssignNudToChunk(nud:Nud):
-		nud.currentChunk = Spatial.GetChunkCoordinate(nud.pos)
+		nud.currentChunk = Spatial.GetChunkCoordinate(nud.transform.pos)
 		Spatial.chunks[nud.currentChunk].append(nud)
 
+	def AssignStationaryToChunk(obj):
+		chunk = Spatial.GetChunkCoordinate(obj.transform.pos)
+		if Spatial.isValidChunk(chunk):
+			Spatial.chunks[chunk].append(obj)
+
 	def InitializeChunks():
-		for y in numpy.arange(-Spatial.ChunkCount/2, Spatial.ChunkCount/2, 1):
-			for x in numpy.arange(-Spatial.ChunkCount/2, Spatial.ChunkCount/2, 1):
+		for y in numpy.arange(0, Spatial.ChunkCount, 1):
+			for x in numpy.arange(0, Spatial.ChunkCount, 1):
 				Spatial.chunks[(x, y)] = []
 
+	def NormalizeRotation(rot: list[float, float]):
+		d = math.sqrt(rot[0] ** 2 + rot[1] ** 2)
+		rot = [rot[0] / d, rot[1] / d]
+
+	#get rid of this and use generic normalize function
 	def NormalizeNudRotation(nud: Nud):
-		d = math.sqrt(nud.rotation[0] ** 2 + nud.rotation[1] ** 2)
-		nud.rotation = [nud.rotation[0] / d, nud.rotation[1] / d]
+		d = math.sqrt(nud.transform.rotation[0] ** 2 + nud.transform.rotation[1] ** 2)
+		nud.transform.rotation = [nud.transform.rotation[0] / d, nud.transform.rotation[1] / d]
 
 	def GetChunkCoordinate(pos: list[float, float]) -> tuple[int, int]:
 		return (int(MoveValueLeft(pos[0], Spatial.ChunkSize) / Spatial.ChunkSize), int(MoveValueLeft(pos[1], Spatial.ChunkSize) / Spatial.ChunkSize))
@@ -375,27 +441,26 @@ fac = None
 def Start():
 	global NudInstance, fac, n, dim
 
-	Spatial.InitializeChunks()
+	Spatial.Start()
 
 	fac = Faction("Team Blue", (0,100,255))
 
-	for i in range(0, 100, 1):
-		n = Nud(fac, [random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2)], Nud.TYPE_COMBAT)
-		NudInstance.append(n)
-		Spatial.AssignNudToChunk(n)
+	for i in range(0, Rock.ROCK_TOTAL, 1):
+		rock = Rock((random.randrange(Spatial.MaxLeft, Spatial.MaxRight), random.randrange(Spatial.MaxUp)))
+		Spatial.AssignStationaryToChunk(rock)
 
-		AdminAI.CommandNud(n,Order.TYPE_GOTO)
-		AdminAI.NudCommand_addPosition(n, random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2))
-
-		AdminAI.CommandNud(n,Order.TYPE_GOTO)
-		AdminAI.NudCommand_addPosition(n, random.randint(-dim[0]/2, dim[0]/2), random.randint(-dim[1]/2, dim[1]/2), 1)
-	
-	Spatial.ShiftNudChunks()
+	"""
+	n = Nud(fac, [0.0, 0.0], Nud.TYPE_BLAH)
+	NudInstance.append(n)
+	Spatial.AssignNudToChunk(n)
+	"""
 
 def Update():
 	global NudInstance
 
-	Spatial.ShiftNudChunks()
+	Spatial.Update()
+
+	Camera.pos = [Camera.pos[0] + 1, Camera.pos[1] + 1]
 
 	#step 1: Run spatial abstract to update nud math (might not need this step)
 
@@ -421,8 +486,11 @@ def Render():
 	pygame.display.flip()
 
 
+gameRuntime = 0
+
+
 def main():
-	global window, running, dim
+	global window, running, dim, gameRuntime
 
 	pygame.init()
 
@@ -453,6 +521,7 @@ def main():
 
 		while (delta > oneFloat):
 			Update()
+			gameRuntime += 1
 			delta -= 1.0
 		
 		if pygame.time.get_ticks() - lastFrame > frameNS:
