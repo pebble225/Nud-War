@@ -160,6 +160,7 @@ class Nud:
 
 		#maybe replace if else chain in the future
 
+		#yea maybe you should. You're storing the mesh function in the mesh, but you're still selecting it with an if/else chain. Sure it's on spawn instead but now it's storing a function call
 		if nudType == Nud.TYPE_COMBAT:
 			self.transform.meshFunction = Mesh.GetCombatNud
 		elif nudType == Nud.TYPE_TRADING:
