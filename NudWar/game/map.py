@@ -13,3 +13,9 @@ class Map:
 		"""
 
 		self.regions[(x, y)] = Region(x, y)
+	
+	def GetRegion(self, x: int, y: int) -> Region | None:
+		if (x, y) in self.regions:
+			return self.regions[(x, y)]
+		else:
+			return None

@@ -1,5 +1,7 @@
 from NudWar.game.transformGameObject import TransformGameObject
 
+from NudWar.game.nud import Nud
+
 class Region(TransformGameObject):
 	SIZE = 100
 
@@ -9,3 +11,10 @@ class Region(TransformGameObject):
 		self.SetPosition(x*Region.SIZE, y*Region.SIZE)
 		self.index = [int(x), int(y)]
 		self.SetScale(Region.SIZE)
+
+		self.objects = []
+	
+	def CreateBasicNud(self, x: float = 0, y: float = 0):
+		nud = Nud()
+		nud.SetPosition(x + self.index[0]*Region.SIZE, y + self.index[1]*Region.SIZE)
+		self.objects.append(nud)

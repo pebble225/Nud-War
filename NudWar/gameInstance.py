@@ -2,6 +2,7 @@ import pygame
 
 from NudWar.game.camera import Camera
 from NudWar.game.map import Map
+from NudWar.game.nud import Nud
 
 from NudWar.input.playerController import PlayerController
 
@@ -12,10 +13,12 @@ class GameInstance:
 	def __init__(self):
 		self.window: Window = Window()
 		self.camera = Camera()
-		self.camera.SetScale(1.0)
+		self.camera.SetScale(10.0)
 		self.playerController = PlayerController()
 		self.playerController.SetTarget(self.camera)
 		self.map = Map()
+
+		self.nud = None
 
 		self.renderer = Renderer(self.map, self.window, self.camera)
 	
@@ -23,6 +26,7 @@ class GameInstance:
 		for y in range(3):
 			for x in range(4):
 				self.map.AddRegion(x, y)
+		self.map.GetRegion(0,0).CreateBasicNud(10, 10)
 	
 	def Input(self):
 		for e in pygame.event.get():
@@ -33,6 +37,23 @@ class GameInstance:
 	def Update(self):
 		self.playerController.Update()
 
+	def main2(self):
+		pygame.init()
+		self.window.Init()
+
+		tps = 60.0
+		tickMS = 1000.0 / tps
+
+		delta = 0.0
+
+		lastTime = pygame.time.get_ticks()
+
+		while self.window.running:
+			self.Input()
+
+			nowTime = pygame.time.get_ticks()
+			delta += float(nowTime-lastTime) / tickMS
+
 	def main(self):
 		pygame.init()
 
@@ -40,7 +61,7 @@ class GameInstance:
 
 		tps = 60.0
 		tickMS = 1000.0 / tps
-		actualTPS = 0 # this should be moved to Window so that the renderer can draw the report into the screen
+		actualTPS = 0
 
 		tickDelta = 0.0
 
@@ -71,11 +92,8 @@ class GameInstance:
 				actualTPS += 1
 				tickDelta -= 1.0
 			
-			nowFrame = pygame.time.get_ticks()
-			if float(nowFrame-lastFrame) > frameMS:
-				lastFrame = nowFrame
-				self.renderer.Update()
-				actualFPS += 1
+			self.renderer.Update()
+			actualFPS += 1
 			
 			nowTimer = pygame.time.get_ticks()
 			if nowTimer - timer > 1000:

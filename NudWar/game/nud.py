@@ -1,33 +1,22 @@
-from abc import ABC, abstractmethod
-
 from NudWar.game.transformGameObject import TransformGameObject
 
 
 class Nud(TransformGameObject):
+	
+
 	def __init__(self):
 		super().__init__()
-	
-	@abstractmethod
-	def Render(self):
-		# this is a parent render for debug purposes
 
-		vertices = [
-			[-1.0, -0.5],
-			[1.0, 0.0],
-			[-1.0, 0.5]
-		]
+		self.SetScale(2.0)
 
-		for vertex in vertices:
-			vertex[0]
+		self.moveSpeed = 1
+		self.rotationSpeed = 10
 
 	def MoveForward(self):
-		pass
+		self.NudgeForward(self.moveSpeed)
 
 	def MoveLeft(self):
-		pass
+		self.RotateByAngle(-self.rotationSpeed)
 
 	def MoveRight(self):
-		pass
-
-	def FirePrimaryWeapon(self):
-		pass
+		self.RotateByAngle(self.rotationSpeed)

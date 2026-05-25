@@ -1,10 +1,12 @@
 from abc import ABC
 
 import pygame
+import numpy as np
 
 from NudWar.game.region import Region
 from NudWar.game.map import Map
 from NudWar.game.camera import Camera
+from NudWar.game.nud import Nud
 from NudWar.render.window import Window
 
 class Renderer:
@@ -13,40 +15,58 @@ class Renderer:
 		self.window = window
 		self.camera = camera
 
-	def TransformVertex(self, vertex: list[float]):
+	def GetTransformedVertex(self, vertex: list[float]) -> list[float]:
 		"""
 		Takes a vertex and transforms it from game space to screen space.
 		"""
 
-		vertex[0] -= self.camera.GetX()
-		vertex[1] -= self.camera.GetY()
-		vertex[0] *= self.camera.GetW()
-		vertex[1] *= self.camera.GetH()
+		outputVertex = [vertex[0], vertex[1]]
+
+		outputVertex[0] -= self.camera.GetX()
+		outputVertex[1] -= self.camera.GetY()
+		outputVertex[0] *= self.camera.GetW()
+		outputVertex[1] *= self.camera.GetH()
 
 		center = self.window.GetCenter()
 
-		vertex[0] += center[0]
-		vertex[1] += center[1]
+		outputVertex[0] += center[0]
+		outputVertex[1] += center[1]
+
+		return outputVertex
 
 	def RenderCornerBox(self, rect: tuple, color: tuple[int], rectWidth: int = 0):
-		vertices = [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]]
+		center = self.window.GetCenter()
 
-		for vertex in vertices:
-			vertex[0] *= rect[2]
-			vertex[1] *= rect[3]
-			vertex[0] += rect[0]
-			vertex[1] += rect[1]
-
-			self.TransformVertex(vertex)
-		
 		pygame.draw.rect(
 			self.window.GetInstance(),
 			color,
 			(
-				vertices[0][0], vertices[0][1], vertices[1][0]-vertices[0][0], vertices[2][1]-vertices[0][1]
+				(
+					rect[0] - self.camera.pos[0]) * self.camera.scale[0] + center[0],
+					(rect[1] - self.camera.pos[1]) * self.camera.scale[1] + center[1],
+					rect[2] * self.camera.scale[0],
+					rect[3] * self.camera.scale[1]
 			),
 			rectWidth
 		)
+	
+	def RenderSimpleNud(self, nud: Nud, color: tuple[int] = (255, 255, 255)):
+		vertices = [
+			[-0.45, -0.25],
+			[0.20, 0.0],
+			[-0.45, 0.25],
+			[-0.25, 0.0]
+		]
+
+		for i in range(0, len(vertices), 1):
+			outputVertex = nud.GetTransformedVertex(vertices[i])
+			vertices[i][0] = outputVertex[0]
+			vertices[i][1] = outputVertex[1]
+			outputVertex = self.GetTransformedVertex(vertices[i])
+			vertices[i][0] = outputVertex[0]
+			vertices[i][1] = outputVertex[1]
+		
+		pygame.draw.polygon(self.window.GetInstance(), color, vertices)
 
 	def FillBackground(self, color: tuple):
 		self.window.GetInstance().fill(color)
@@ -60,6 +80,10 @@ class Renderer:
 
 	def RenderRegion(self, region: Region):
 		self.GridRegionRender(region)
+
+		for object in region.objects:
+			if isinstance(object, Nud):
+				self.RenderSimpleNud(object)
 	
 	def Update(self):
 		self.FillBackground((50, 50, 50))
