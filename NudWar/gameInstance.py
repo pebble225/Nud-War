@@ -7,20 +7,25 @@ from NudWar.game.nud import Nud
 from NudWar.input.playerController import PlayerController
 
 from NudWar.render.renderer import Renderer
+from NudWar.manager.nudManager import NudManager
+from NudWar.manager.regionManager import RegionManager
+from NudWar.manager.mapManager import MapManager
+
 from NudWar.render.window import Window
 
 class GameInstance:
 	def __init__(self):
 		self.window: Window = Window()
-		self.camera = Camera()
+		self.camera: Camera = Camera()
 		self.camera.SetScale(10.0)
-		self.playerController = PlayerController()
+		self.playerController: PlayerController = PlayerController()
 		self.playerController.SetTarget(self.camera)
-		self.map = Map()
+		self.map: Map = Map()
 
-		self.nud = None
-
-		self.renderer = Renderer(self.map, self.window, self.camera)
+		self.renderer: Renderer = Renderer(self.map, self.window, self.camera)
+		self.nudManager: NudManager = NudManager(self.map, self.camera)
+		self.regionManager: RegionManager = RegionManager(self.nudManager)
+		self.mapManager: MapManager = MapManager(self.map, self.regionManager)
 	
 	def Start(self):
 		for y in range(3):
@@ -37,22 +42,7 @@ class GameInstance:
 	def Update(self):
 		self.playerController.Update()
 
-	def main2(self):
-		pygame.init()
-		self.window.Init()
-
-		tps = 60.0
-		tickMS = 1000.0 / tps
-
-		delta = 0.0
-
-		lastTime = pygame.time.get_ticks()
-
-		while self.window.running:
-			self.Input()
-
-			nowTime = pygame.time.get_ticks()
-			delta += float(nowTime-lastTime) / tickMS
+		self.mapManager.UpdateAll()
 
 	def main(self):
 		pygame.init()

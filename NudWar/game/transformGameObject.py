@@ -112,7 +112,7 @@ class TransformGameObject(GameObject):
 		self.rot[1] = rotation[1]
 	
 	def RotateByAngle(self, degree: float):
-		radian = (degree % 360.0) * math.pi / 180
+		radian = math.radians(degree % 360)
 		vector = [math.cos(radian), math.sin(radian)]
 		self._MultiplyRotationByVector(vector)
 		self._NormalizeRotation()

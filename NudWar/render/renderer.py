@@ -10,6 +10,9 @@ from NudWar.game.nud import Nud
 from NudWar.render.window import Window
 
 class Renderer:
+	"""
+	Technically a manager but is currently categorized in the rendering folder. May change.
+	"""
 	def __init__(self, map: Map, window: Window, camera: Camera):
 		self.map = map
 		self.window = window

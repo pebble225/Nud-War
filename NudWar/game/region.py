@@ -15,6 +15,6 @@ class Region(TransformGameObject):
 		self.objects = []
 	
 	def CreateBasicNud(self, x: float = 0, y: float = 0):
-		nud = Nud()
+		nud = Nud(10.0, 1.0)
 		nud.SetPosition(x + self.index[0]*Region.SIZE, y + self.index[1]*Region.SIZE)
 		self.objects.append(nud)

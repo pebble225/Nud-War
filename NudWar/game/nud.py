@@ -2,21 +2,21 @@ from NudWar.game.transformGameObject import TransformGameObject
 
 
 class Nud(TransformGameObject):
-	
-
-	def __init__(self):
+	def __init__(self, moveSpeed: float, rotationSpeed: float):
 		super().__init__()
 
 		self.SetScale(2.0)
 
-		self.moveSpeed = 1
-		self.rotationSpeed = 10
+		self.moveSpeed = moveSpeed
+		self.rotationSpeed = rotationSpeed
 
-	def MoveForward(self):
-		self.NudgeForward(self.moveSpeed)
+	def GetMoveSpeed(self) -> float:
+		return self.moveSpeed
+	
+	def GetRotationSpeed(self) -> float:
+		return self.rotationSpeed
 
-	def MoveLeft(self):
-		self.RotateByAngle(-self.rotationSpeed)
-
-	def MoveRight(self):
-		self.RotateByAngle(self.rotationSpeed)
+	def MoveForward(self, distance: float):
+		moveSpeed = self.GetMoveSpeed()
+		distance = moveSpeed if distance > moveSpeed else distance
+		self.NudgeForward(distance)
