@@ -11,6 +11,8 @@ class TransformGameObject(GameObject):
 		self.scale = [1.0, 1.0]
 		self.collisionBoxDim = [1.0, 1.0]
 		self.renderObject = None
+
+		self.name = None # this is meant for debugging. It allows the Player Controller to provide special input behavior
 	
 	def GetX(self) -> float:
 		return self.pos[0]
@@ -46,9 +48,13 @@ class TransformGameObject(GameObject):
 	def GetRotationAngle(self) -> float:
 		return math.degrees(math.atan2(self.rot[1], self.rot[0])) % 360.0
 	
-	def GetTransformedVertex(self, vertex: list[float]) -> list[float]:
+	def ToGameSpace(self, vertex: list[float]) -> list[float]:
 		"""
 		Returns a transformed vertex in game space according to the transform of the game object
+
+		this does not include the camera
+
+		maybe this should be put in renderer
 		"""
 		outputVertex = [vertex[0], vertex[1]]
 

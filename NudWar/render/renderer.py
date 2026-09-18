@@ -18,7 +18,7 @@ class Renderer:
 		self.window = window
 		self.camera = camera
 
-	def GetTransformedVertex(self, vertex: list[float]) -> list[float]:
+	def ToScreenSpace(self, vertex: list[float]) -> list[float]:
 		"""
 		Takes a vertex and transforms it from game space to screen space.
 		"""
@@ -37,7 +37,12 @@ class Renderer:
 
 		return outputVertex
 
-	def RenderCornerBox(self, rect: tuple, color: tuple[int], rectWidth: int = 0):
+	def RenderTopLeftBox(self, rect: tuple, color: tuple[int], rectWidth: int = 0):
+		"""
+		
+		'Top-Left box' means that the coordinates of the box are at the top left.
+		
+		"""
 		center = self.window.GetCenter()
 
 		pygame.draw.rect(
@@ -55,17 +60,17 @@ class Renderer:
 	
 	def RenderSimpleNud(self, nud: Nud, color: tuple[int] = (255, 255, 255)):
 		vertices = [
-			[-0.45, -0.25],
-			[0.20, 0.0],
-			[-0.45, 0.25],
-			[-0.25, 0.0]
+			[-0.30, -0.25],
+			[0.35, 0.0],
+			[-0.30, 0.25],
+			[-0.10, 0.0]
 		]
 
 		for i in range(0, len(vertices), 1):
-			outputVertex = nud.GetTransformedVertex(vertices[i])
+			outputVertex = nud.ToGameSpace(vertices[i])
 			vertices[i][0] = outputVertex[0]
 			vertices[i][1] = outputVertex[1]
-			outputVertex = self.GetTransformedVertex(vertices[i])
+			outputVertex = self.ToScreenSpace(vertices[i])
 			vertices[i][0] = outputVertex[0]
 			vertices[i][1] = outputVertex[1]
 		
@@ -75,13 +80,21 @@ class Renderer:
 		self.window.GetInstance().fill(color)
 
 	def GridRegionRender(self, region: Region):
-		self.RenderCornerBox(
+		"""
+		Renders the borders of a region in a white box.
+		"""
+		self.RenderTopLeftBox(
 			(region.pos[0], region.pos[1], region.scale[0], region.scale[1]),
 			(255, 255, 255),
 			1
 		)
 
 	def RenderRegion(self, region: Region):
+		"""
+		
+		Entry method for rendering a region. This includes the rendering of all objects within the region.
+		
+		"""
 		self.GridRegionRender(region)
 
 		for object in region.objects:

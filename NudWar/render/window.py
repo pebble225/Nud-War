@@ -7,6 +7,9 @@ class Window:
 		self.dim = self.GetPrimaryMonitorResolution() if dim is None else dim
 		self.running = True
 		self.gameTime = 0
+		self.tickRate = 60.0
+		self.MSPerTick = 1000.0 / self.tickRate
+		self.UnitsPerTick = 1 / self.tickRate
 	
 	def Init(self):
 		self.instance = pygame.display.set_mode(self.dim, pygame.NOFRAME)
@@ -32,6 +35,11 @@ class Window:
 		return self.dim
 	
 	def GetCenter(self) -> tuple:
+		"""
+		
+		The center coordinate of the window instance.
+
+		"""
 		return (self.dim[0] // 2, self.dim[1] // 2)
 	
 	def GetWidth(self) -> int:
@@ -39,3 +47,15 @@ class Window:
 	
 	def GetHeight(self) -> int:
 		return self.dim[1]
+
+	def ToUnitsPerTick(self, units: float):
+		"""
+		Converts from Units per Second to Units per Tick
+		"""
+		return units * self.UnitsPerTick
+
+	def ToUnitsPerSecond(self, units: float):
+		"""
+		Converts from Units per Tick to Units per Second
+		"""
+		return units * self.MSPerTick

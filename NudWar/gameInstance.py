@@ -3,8 +3,10 @@ import pygame
 from NudWar.game.camera import Camera
 from NudWar.game.map import Map
 from NudWar.game.nud import Nud
+from NudWar.game.transformGameObject import TransformGameObject
 
 from NudWar.input.playerController import PlayerController
+from NudWar.utils.rng import RNG
 
 from NudWar.render.renderer import Renderer
 from NudWar.manager.nudManager import NudManager
@@ -17,21 +19,26 @@ class GameInstance:
 	def __init__(self):
 		self.window: Window = Window()
 		self.camera: Camera = Camera()
+		self.camera.name = "camera"
 		self.camera.SetScale(10.0)
 		self.playerController: PlayerController = PlayerController()
 		self.playerController.SetTarget(self.camera)
 		self.map: Map = Map()
+		self.ran = None
 
 		self.renderer: Renderer = Renderer(self.map, self.window, self.camera)
-		self.nudManager: NudManager = NudManager(self.map, self.camera)
-		self.regionManager: RegionManager = RegionManager(self.nudManager)
+		self.nudManager: NudManager = NudManager(self.map, self.camera, self.window)
+		self.regionManager: RegionManager = RegionManager(self.nudManager, self.window)
 		self.mapManager: MapManager = MapManager(self.map, self.regionManager)
+
+		self.target = TransformGameObject()
+		self.target.name = "target"
 	
 	def Start(self):
 		for y in range(3):
 			for x in range(4):
 				self.map.AddRegion(x, y)
-		self.map.GetRegion(0,0).CreateBasicNud(10, 10)
+		self.regionManager.CreateBasicNud(self.map.GetRegion(0, 0), 10, 10)
 	
 	def Input(self):
 		for e in pygame.event.get():
@@ -49,8 +56,6 @@ class GameInstance:
 
 		self.window.Init()
 
-		tps = 60.0
-		tickMS = 1000.0 / tps
 		actualTPS = 0
 
 		tickDelta = 0.0
@@ -73,7 +78,7 @@ class GameInstance:
 			self.Input()
 
 			nowTime = pygame.time.get_ticks()
-			tickDelta += float(nowTime-lastTime) / tickMS
+			tickDelta += float(nowTime-lastTime) / self.window.MSPerTick
 			lastTime = nowTime
 
 			while not (tickDelta < 1):
