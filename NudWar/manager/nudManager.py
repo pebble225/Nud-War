@@ -101,5 +101,7 @@ class NudManager:
 	
 	def Entry(self, nud: Nud, currentRegion: Region):
 		if len(nud.actionQueue) < 1:
-			nud.AddNewAction(Wander())
+			nud.AddNewAction(Wander(nud))
 		action: Action = nud.actionQueue[-1]
+		if action.Update(self.window.gameTime) == Action.COMPLETED:
+			nud.RemoveLastAction()

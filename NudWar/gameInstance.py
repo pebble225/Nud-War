@@ -4,6 +4,9 @@ from NudWar.game.camera import Camera
 from NudWar.game.map import Map
 from NudWar.game.nud import Nud
 from NudWar.game.transformGameObject import TransformGameObject
+from NudWar.game.constants import Constants
+
+from NudWar.game.behavior.moveTo import MoveTo
 
 from NudWar.input.playerController import PlayerController
 from NudWar.utils.rng import RNG, LCG
@@ -25,6 +28,7 @@ class GameInstance:
 		self.playerController.SetTarget(self.camera)
 		self.map: Map = Map()
 		self.ran = LCG.NADS64bit()
+		self.constants = Constants()
 
 		self.renderer: Renderer = Renderer(self.map, self.window, self.camera)
 		self.nudManager: NudManager = NudManager(self.map, self.camera, self.window, self.ran)
@@ -38,7 +42,8 @@ class GameInstance:
 		for y in range(3):
 			for x in range(4):
 				self.map.AddRegion(x, y)
-		self.regionManager.CreateBasicNud(self.map.GetRegion(0, 0), 10, 10)
+		nud = self.regionManager.CreateBasicNud(self.map.GetRegion(0, 0), 10, 10)
+		nud.AddNewAction(MoveTo((50, 50), nud))
 	
 	def Input(self):
 		for e in pygame.event.get():
@@ -78,7 +83,7 @@ class GameInstance:
 			self.Input()
 
 			nowTime = pygame.time.get_ticks()
-			tickDelta += float(nowTime-lastTime) / self.window.MSPerTick
+			tickDelta += float(nowTime-lastTime) / self.constants.MSPerTick
 			lastTime = nowTime
 
 			while not (tickDelta < 1):

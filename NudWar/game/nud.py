@@ -24,6 +24,12 @@ class Nud(TransformGameObject):
 	def AddNewAction(self, action: Action):
 		self.actionQueue.append(action)
 
+	def RemoveLastAction(self):
+		# One of the flaws with the ai setup is that each completed action will generate garbage for the gc
+		# If it helps with speed, the gc could be informed after each update to free the memory from completed tasks
+		# so that it doesn't build up.
+		self.actionQueue.pop()
+
 	# Layer 1
 	
 	def MoveForward(self, distance: float):
