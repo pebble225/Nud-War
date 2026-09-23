@@ -32,7 +32,7 @@ class LCG(RNG):
 
 	@staticmethod
 	def NADS64bit(seed: int = 0) -> "LCG":
-		lcg = LCG(18446744073709551615, 2862933555777941757, 3037000493, seed)
+		lcg = LCG(18446744073709551616, 2862933555777941757, 3037000493, seed)
 		return lcg
 	
 	def nextInt64(self) -> int:

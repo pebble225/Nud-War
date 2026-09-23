@@ -3,16 +3,22 @@ from NudWar.game.map import Map
 from NudWar.game.camera import Camera
 from NudWar.game.region import Region
 from NudWar.render.window import Window
+from NudWar.utils.rng import RNG, LCG
+
+from NudWar.game.behavior.action import Action
+from NudWar.game.behavior.moveTo import MoveTo
+from NudWar.game.behavior.wander import Wander
 
 from NudWar.utils.pumpy import *
 
 import math
 
 class NudManager:
-	def __init__(self, map: Map, camera: Camera, window: Window):
+	def __init__(self, map: Map, camera: Camera, window: Window, ran: LCG):
 		self.map = map
 		self.camera = camera
 		self.window = window
+		self.ran = ran
 	
 	# Layer 1
 
@@ -52,10 +58,13 @@ class NudManager:
 
 	# Layer 2
 
-	def MoveToPosition(self, nud: Nud, pos: tuple[float], speed: float = 999999):
+	def MoveToPosition(self, nud: Nud, pos: tuple[float], speed: float | None = None):
 		"""
 		@param pos Relative to position of the current region
+		@param speed Measured in units per tick
 		"""
+
+		speed = nud.moveSpeed if (speed is None or (not (speed > 0)) or speed > nud.moveSpeed) else speed
 
 		angleTolerance = 0.01
 		distanceTolerance = 0.01
@@ -78,12 +87,19 @@ class NudManager:
 					# the theory is the nud will stop a one hundreth of the distanceTolerance behind the target
 					# and prevent the nud from turning again before completing the action
 			else:
-				self.MaxForward(nud)
+				self.MoveForward(nud, speed)
 		else:
 			self.Turn(nud, angle)
+
+	# Layer 3
+
+	def Wander(self, nud: Nud):
+		pass
 		
 	
 	# entry
 	
 	def Entry(self, nud: Nud, currentRegion: Region):
-		self.MoveToPosition(nud, (50, 50))
+		if len(nud.actionQueue) < 1:
+			nud.AddNewAction(Wander())
+		action: Action = nud.actionQueue[-1]

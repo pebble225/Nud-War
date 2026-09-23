@@ -6,7 +6,7 @@ from NudWar.game.nud import Nud
 from NudWar.game.transformGameObject import TransformGameObject
 
 from NudWar.input.playerController import PlayerController
-from NudWar.utils.rng import RNG
+from NudWar.utils.rng import RNG, LCG
 
 from NudWar.render.renderer import Renderer
 from NudWar.manager.nudManager import NudManager
@@ -24,10 +24,10 @@ class GameInstance:
 		self.playerController: PlayerController = PlayerController()
 		self.playerController.SetTarget(self.camera)
 		self.map: Map = Map()
-		self.ran = None
+		self.ran = LCG.NADS64bit()
 
 		self.renderer: Renderer = Renderer(self.map, self.window, self.camera)
-		self.nudManager: NudManager = NudManager(self.map, self.camera, self.window)
+		self.nudManager: NudManager = NudManager(self.map, self.camera, self.window, self.ran)
 		self.regionManager: RegionManager = RegionManager(self.nudManager, self.window)
 		self.mapManager: MapManager = MapManager(self.map, self.regionManager)
 
