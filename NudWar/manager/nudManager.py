@@ -4,6 +4,7 @@ from NudWar.game.camera import Camera
 from NudWar.game.region import Region
 from NudWar.render.window import Window
 from NudWar.utils.rng import RNG, LCG
+from NudWar.game.constants import Constants
 
 from NudWar.game.behavior.action import Action
 from NudWar.game.behavior.moveTo import MoveTo
@@ -14,11 +15,12 @@ from NudWar.utils.pumpy import *
 import math
 
 class NudManager:
-	def __init__(self, map: Map, camera: Camera, window: Window, ran: LCG):
+	def __init__(self, map: Map, camera: Camera, window: Window, ran: LCG, constants: Constants):
 		self.map = map
 		self.camera = camera
 		self.window = window
 		self.ran = ran
+		self.constants = constants
 	
 	# Layer 1
 
@@ -55,53 +57,12 @@ class NudManager:
 	
 	def TurnLeftMax(self, nud: Nud):
 		nud.RotateByAngle(-nud.rotationSpeed)
-
-	# Layer 2
-
-	def MoveToPosition(self, nud: Nud, pos: tuple[float], speed: float | None = None):
-		"""
-		@param pos Relative to position of the current region
-		@param speed Measured in units per tick
-		"""
-
-		speed = nud.moveSpeed if (speed is None or (not (speed > 0)) or speed > nud.moveSpeed) else speed
-
-		angleTolerance = 0.01
-		distanceTolerance = 0.01
-
-		distance = distanceFormula(nud.pos, pos)
-
-		destinationVector = [pos[0]-nud.pos[0], pos[1]-nud.pos[1]]
-		destinationVector = normalizeVector(destinationVector)
-		turningVector = divideVectors(destinationVector, nud.rot)
-		angle = np.degrees(np.atan2(turningVector[1], turningVector[0]))
-
-		if np.abs(angle) < angleTolerance:
-			if distance < nud.moveSpeed:
-				if distance < distanceTolerance:
-					return # completed condition
-				else:
-					# distanceTolerance < distance < nud.moveSpeed
-					self.MoveForward(nud, distance - (distanceTolerance/100))
-
-					# the theory is the nud will stop a one hundreth of the distanceTolerance behind the target
-					# and prevent the nud from turning again before completing the action
-			else:
-				self.MoveForward(nud, speed)
-		else:
-			self.Turn(nud, angle)
-
-	# Layer 3
-
-	def Wander(self, nud: Nud):
-		pass
-		
 	
 	# entry
 	
 	def Entry(self, nud: Nud, currentRegion: Region):
 		if len(nud.actionQueue) < 1:
-			nud.AddNewAction(Wander(nud))
+			nud.AddNewAction(Wander(nud, self.ran))
 		action: Action = nud.actionQueue[-1]
 		if action.Update(self.window.gameTime) == Action.COMPLETED:
 			nud.RemoveLastAction()

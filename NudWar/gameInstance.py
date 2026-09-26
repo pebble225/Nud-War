@@ -7,6 +7,7 @@ from NudWar.game.transformGameObject import TransformGameObject
 from NudWar.game.constants import Constants
 
 from NudWar.game.behavior.moveTo import MoveTo
+from NudWar.game.behavior.idle import Idle
 
 from NudWar.input.playerController import PlayerController
 from NudWar.utils.rng import RNG, LCG
@@ -31,8 +32,8 @@ class GameInstance:
 		self.constants = Constants()
 
 		self.renderer: Renderer = Renderer(self.map, self.window, self.camera)
-		self.nudManager: NudManager = NudManager(self.map, self.camera, self.window, self.ran)
-		self.regionManager: RegionManager = RegionManager(self.nudManager, self.window)
+		self.nudManager: NudManager = NudManager(self.map, self.camera, self.window, self.ran, self.constants)
+		self.regionManager: RegionManager = RegionManager(self.nudManager, self.window, self.constants)
 		self.mapManager: MapManager = MapManager(self.map, self.regionManager)
 
 		self.target = TransformGameObject()
@@ -42,8 +43,8 @@ class GameInstance:
 		for y in range(3):
 			for x in range(4):
 				self.map.AddRegion(x, y)
-		nud = self.regionManager.CreateBasicNud(self.map.GetRegion(0, 0), 10, 10)
-		nud.AddNewAction(MoveTo((50, 50), nud))
+		for i in range(50):
+			self.regionManager.CreateBasicNud(self.map.GetRegion(0, 0), 40, 40)
 	
 	def Input(self):
 		for e in pygame.event.get():

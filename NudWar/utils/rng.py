@@ -18,6 +18,14 @@ class RNG:
 	def nextFloat(self, scale: float = 1.0) -> float:
 		raise NotImplementedError("This rng does not support floating point values.")
 
+	@abstractmethod
+	def floatRange(self, min: float, max: float):
+		raise NotImplementedError("This rng does not support float range.")
+
+	@abstractmethod
+	def intRange(self, min: int, max: int):
+		raise NotImplementedError("This rng does not support int range.")
+
 
 class LCG(RNG):
 	def __init__(self, m: int, a: int, c: int, seed: int = 0):
@@ -46,9 +54,20 @@ class LCG(RNG):
 		n = self.nextInt64()
 		return (float(n)/float(self.m))*scale
 
+	def floatRange(self, min: float, max: float):
+		value = self.nextFloat(max-min+1)
+		if not (value < max + 1):
+			value -= 1.0
+		return value + min
+
+	def intRange(self, min: int, max: int):
+		value = self.nextFloat(max-min+1)
+		if not (value < max + 1):
+			value -= 1.0 #astronomically unlikely
+		return int(value) + min
+
 
 if __name__ == "__main__":
 	ran = LCG.NADS64bit()
 	for i in range(10):
-		print(ran.nextFloat())
-
+		print(ran.intRange(2, 4))

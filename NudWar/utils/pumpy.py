@@ -6,7 +6,7 @@ import numpy as np # my dad
 
 def distanceFormula(pos1: tuple[float], pos2: tuple[float]):
 	x = pos2[0]-pos1[0]
-	y = pos2[1]-pos1[0]
+	y = pos2[1]-pos1[1]
 	return np.sqrt(x*x+y*y)
 
 def manhatten(pos1: tuple[float], pos2: tuple[float]):
