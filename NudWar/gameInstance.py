@@ -33,7 +33,7 @@ class GameInstance:
 		self.ran = LCG.NADS64bit()
 
 		self.unitData = UnitData()
-		self.renderData = RenderData()
+		self.renderData = RenderData(self.unitData)
 
 		self.renderer: Renderer = Renderer()
 		self.renderer.ImportModules(self.map, self.window, self.camera)
@@ -65,6 +65,8 @@ class GameInstance:
 
 	def Update(self):
 		self.playerController.Update()
+
+		self.renderer.FixedUpdate()
 
 		self.mapManager.UpdateAll()
 
