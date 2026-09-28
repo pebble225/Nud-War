@@ -21,3 +21,6 @@ class Idle(Action):
 			return Action.COMPLETED
 		else:
 			return Action.RUNNING
+
+	def checkFlags(self):
+		pass

@@ -8,40 +8,62 @@ from NudWar.game.map import Map
 from NudWar.game.camera import Camera
 from NudWar.game.nud import Nud
 from NudWar.render.window import Window
+from NudWar.utils.pumpy import *
+
+from NudWar.data.unitData import UnitData
+from NudWar.data.renderData import RenderData
+
+from NudWar.game.transformGameObject import TransformGameObject
 
 class Renderer:
 	"""
 	Technically a manager but is currently categorized in the rendering folder. May change.
 	"""
-	def __init__(self, map: Map, window: Window, camera: Camera):
+	def __init__(self):
+		self.map: Map = None
+		self.window: Window = None
+		self.camera: Camera = None
+		
+		self.unitData: UnitData = None
+		self.renderData: RenderData = None
+
+	def ImportModules(self, map: Map, window: Window, camera: Camera):
 		self.map = map
 		self.window = window
 		self.camera = camera
 
-	def ToScreenSpace(self, vertex: list[float]) -> list[float]:
-		"""
-		Takes a vertex and transforms it from game space to screen space.
-		"""
+	def ImportData(self, unitData: UnitData, renderData: RenderData):
+		self.unitData = unitData
+		self.renderData = renderData
+	
+	def ToGameSpace(self, vertices: list[list[float, float]], transform: TransformGameObject):
+		for  i, vertex in enumerate(vertices):
+			vertex = MultiplyVectors(vertex, transform.rot)
+			vertex[0] *= transform.GetW()
+			vertex[1] *= transform.GetH()
+			vertex[0] += transform.GetX()
+			vertex[1] += transform.GetY()
 
-		outputVertex = [vertex[0], vertex[1]]
+			vertices[i] = vertex
 
-		outputVertex[0] -= self.camera.GetX()
-		outputVertex[1] -= self.camera.GetY()
-		outputVertex[0] *= self.camera.GetW()
-		outputVertex[1] *= self.camera.GetH()
-
+	def ToScreenSpace2(self, vertices: list[list[float, float]]):
 		center = self.window.GetCenter()
+		for vertex in vertices:
+			vertex[0] -= self.camera.GetX()
+			vertex[1] -= self.camera.GetY()
+			vertex[0] *= self.camera.GetW()
+			vertex[1] *= self.camera.GetH()
 
-		outputVertex[0] += center[0]
-		outputVertex[1] += center[1]
-
-		return outputVertex
+			vertex[0] += center[0]
+			vertex[1] += center[1]
 
 	def RenderTopLeftBox(self, rect: tuple, color: tuple[int], rectWidth: int = 0):
 		"""
 		
 		'Top-Left box' means that the coordinates of the box are at the top left.
 		
+		rect coordinates are in game space and the function transfers it to screen space
+
 		"""
 		center = self.window.GetCenter()
 
@@ -66,13 +88,8 @@ class Renderer:
 			[-0.10, 0.0]
 		]
 
-		for i in range(0, len(vertices), 1):
-			outputVertex = nud.ToGameSpace(vertices[i])
-			vertices[i][0] = outputVertex[0]
-			vertices[i][1] = outputVertex[1]
-			outputVertex = self.ToScreenSpace(vertices[i])
-			vertices[i][0] = outputVertex[0]
-			vertices[i][1] = outputVertex[1]
+		self.ToGameSpace(vertices, nud)
+		self.ToScreenSpace2(vertices)
 		
 		pygame.draw.polygon(self.window.GetInstance(), color, vertices)
 

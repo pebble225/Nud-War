@@ -2,7 +2,11 @@ from NudWar.game.map import Map
 from NudWar.manager.regionManager import RegionManager
 
 class MapManager:
-	def __init__(self, map: Map, regionManager: RegionManager):
+	def __init__(self):
+		self.map: Map = None
+		self.regionManager: RegionManager = None
+
+	def ImportModules(self, map: Map, regionManager: RegionManager):
 		self.map = map
 		self.regionManager = regionManager
 

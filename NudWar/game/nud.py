@@ -1,7 +1,7 @@
 from NudWar.game.transformGameObject import TransformGameObject
 
 from NudWar.game.behavior.action import Action
-from NudWar.game.behavior.moveTo import MoveTo
+from NudWar.game.behavior.nud.moveTo import MoveTo
 
 class Nud(TransformGameObject):
 	def __init__(self, moveSpeed: float, rotationSpeed: float):

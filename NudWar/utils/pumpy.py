@@ -12,6 +12,9 @@ def distanceFormula(pos1: tuple[float], pos2: tuple[float]):
 def manhatten(pos1: tuple[float], pos2: tuple[float]):
 	return np.abs(pos2[0]-pos1[0])+np.abs(pos2[1]-pos1[1])
 
+def MultiplyVectors(vecA: list[float], vecB: list[float]):
+		return [vecA[0]*vecB[0] - vecA[1]*vecB[1], vecA[0]*vecB[1] + vecA[1]*vecB[0]]
+
 def divideVectors(vecA: tuple[float], vecB: tuple[float]):
 	n = vecB[0]*vecB[0]+vecB[1]*vecB[1]
 	return [

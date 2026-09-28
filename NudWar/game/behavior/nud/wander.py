@@ -2,30 +2,30 @@ from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
 
 from NudWar.game.behavior.action import Action
-from NudWar.game.behavior.idle import Idle
-from NudWar.game.behavior.moveTo import MoveTo
+from NudWar.game.behavior.nud.idle import Idle
+from NudWar.game.behavior.nud.moveTo import MoveTo
 
-from NudWar.game.constants import Constants
+from NudWar.data.unitData import UnitData
 from NudWar.utils.rng import LCG
 
 if TYPE_CHECKING:
 	from NudWar.game.nud import Nud
 
 class Wander(Action):
-	def __init__(self, parent: Nud, ran: LCG):
+	def __init__(self, parent: Nud, ran: LCG, unitData: UnitData):
 		super().__init__(parent)
 
 		self.parent = parent
 		self.nextAction = "idle"
 		self.ran = ran
-		self.constants = Constants()
+		self.unitData = unitData
 
 	def Update(self, gameTime: int) -> int:
 		if self.nextAction == "idle":
 			self.parent.AddNewAction(
 				Idle(
 					gameTime,
-					int(self.constants.ToTicks(
+					int(self.unitData.ToTicks(
 						self.ran.floatRange(2.0, 8.0) # replace both with constant
 					)),
 					self.parent
@@ -42,7 +42,7 @@ class Wander(Action):
 						self.ran.intRange(1, 99)
 					],
 					self.parent,
-					self.constants.ToMetersPerTick(6) # replace with constant
+					self.unitData.ToMetersPerTick(6) # replace with constant
 				)
 			)
 			self.nextAction = "idle"
@@ -50,3 +50,6 @@ class Wander(Action):
 			return Action.RUNNING
 		else:
 			return Action.FAILED
+
+	def checkFlags(self):
+		pass

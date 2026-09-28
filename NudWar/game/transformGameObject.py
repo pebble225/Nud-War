@@ -1,4 +1,5 @@
 from NudWar.game.gameObject import GameObject
+from NudWar.utils.pumpy import *
 import math
 import numpy as np
 
@@ -48,24 +49,6 @@ class TransformGameObject(GameObject):
 	def GetRotationAngle(self) -> float:
 		return math.degrees(math.atan2(self.rot[1], self.rot[0])) % 360.0
 	
-	def ToGameSpace(self, vertex: list[float]) -> list[float]:
-		"""
-		Returns a transformed vertex in game space according to the transform of the game object
-
-		this does not include the camera
-
-		maybe this should be put in renderer
-		"""
-		outputVertex = [vertex[0], vertex[1]]
-
-		outputVertex = self._MultiplyVectors(vertex, self.rot)
-		outputVertex[0] *= self.scale[0]
-		outputVertex[1] *= self.scale[1]
-		outputVertex[0] += self.pos[0]
-		outputVertex[1] += self.pos[1]
-
-		return outputVertex
-	
 	def Nudge(self, x: float, y: float):
 		"""
 		Move this object in a direction (x, y)
@@ -99,26 +82,9 @@ class TransformGameObject(GameObject):
 		Move object in the direction of its left-side rotation by a distance
 		"""
 		self.NudgeRight(-distance)
-
-	def _NormalizeRotation(self):
-		d = math.sqrt(self.rot[0]*self.rot[0]+self.rot[1]*self.rot[1])
-
-		self.rot = [self.rot[0] / d, self.rot[1] / d]
-	
-	def _NormalizeVector(self, vec: list[float]):
-		d = math.sqrt(vec[0]*vec[0]+vec[1]*vec[1])
-		return [vec[0] / d, vec[1] / d]
-
-	def _MultiplyVectors(self, vecA: list[float], vecB: list[float]):
-		return [vecA[0]*vecB[0] - vecA[1]*vecB[1], vecA[0]*vecB[1] + vecA[1]*vecB[0]]
-	
-	def _MultiplyRotationByVector(self, vec: tuple[float]):
-		rotation = self._MultiplyVectors(self.rot, vec)
-		self.rot[0] = rotation[0]
-		self.rot[1] = rotation[1]
 	
 	def RotateByAngle(self, degree: float):
 		radian = math.radians(degree % 360)
 		vector = [math.cos(radian), math.sin(radian)]
-		self._MultiplyRotationByVector(vector)
-		self._NormalizeRotation()
+		self.rot = MultiplyVectors(self.rot, vector)
+		self.rot = normalizeVector(self.rot)

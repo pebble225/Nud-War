@@ -43,3 +43,6 @@ class MoveTo(Action):
 			self.parent.Turn(angle)
 
 		return Action.RUNNING
+
+	def checkFlags(self):
+		pass

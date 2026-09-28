@@ -4,13 +4,15 @@ from NudWar.game.camera import Camera
 from NudWar.game.map import Map
 from NudWar.game.nud import Nud
 from NudWar.game.transformGameObject import TransformGameObject
-from NudWar.game.constants import Constants
 
-from NudWar.game.behavior.moveTo import MoveTo
-from NudWar.game.behavior.idle import Idle
+from NudWar.game.behavior.nud.moveTo import MoveTo
+from NudWar.game.behavior.nud.idle import Idle
 
 from NudWar.input.playerController import PlayerController
 from NudWar.utils.rng import RNG, LCG
+
+from NudWar.data.unitData import UnitData
+from NudWar.data.renderData import RenderData
 
 from NudWar.render.renderer import Renderer
 from NudWar.manager.nudManager import NudManager
@@ -24,26 +26,35 @@ class GameInstance:
 		self.window: Window = Window()
 		self.camera: Camera = Camera()
 		self.camera.name = "camera"
-		self.camera.SetScale(10.0)
+		self.camera.SetScale(12.0)
 		self.playerController: PlayerController = PlayerController()
 		self.playerController.SetTarget(self.camera)
 		self.map: Map = Map()
 		self.ran = LCG.NADS64bit()
-		self.constants = Constants()
 
-		self.renderer: Renderer = Renderer(self.map, self.window, self.camera)
-		self.nudManager: NudManager = NudManager(self.map, self.camera, self.window, self.ran, self.constants)
-		self.regionManager: RegionManager = RegionManager(self.nudManager, self.window, self.constants)
-		self.mapManager: MapManager = MapManager(self.map, self.regionManager)
+		self.unitData = UnitData()
+		self.renderData = RenderData()
 
-		self.target = TransformGameObject()
-		self.target.name = "target"
+		self.renderer: Renderer = Renderer()
+		self.renderer.ImportModules(self.map, self.window, self.camera)
+		self.renderer.ImportData(self.unitData, self.renderData)
+
+		self.nudManager: NudManager = NudManager()
+		self.nudManager.ImportModules(self.map, self.camera, self.window, self.ran)
+		self.nudManager.ImportData(self.unitData)
+
+		self.regionManager: RegionManager = RegionManager()
+		self.regionManager.ImportModules(self.nudManager, self.window)
+		self.regionManager.ImportData(self.unitData)
+
+		self.mapManager: MapManager = MapManager()
+		self.mapManager.ImportModules(self.map, self.regionManager)
 	
 	def Start(self):
 		for y in range(3):
 			for x in range(4):
 				self.map.AddRegion(x, y)
-		for i in range(50):
+		for i in range(100):
 			self.regionManager.CreateBasicNud(self.map.GetRegion(0, 0), 40, 40)
 	
 	def Input(self):
@@ -76,15 +87,23 @@ class GameInstance:
 
 		timer = pygame.time.get_ticks()
 
-		reportRefreshRate = False
+		reportRefreshRate = False #this needs to be moved to constants
 
 		self.Start()
+
+		fpsList = []
+		def fpsAverage(fpsList: list[int]):
+			n = 0
+			for i in fpsList:
+				n += i
+			return int(float(n) / float(len(fpsList)))
+
 
 		while self.window.running:
 			self.Input()
 
 			nowTime = pygame.time.get_ticks()
-			tickDelta += float(nowTime-lastTime) / self.constants.MSPerTick
+			tickDelta += float(nowTime-lastTime) / self.unitData.MSPerTick
 			lastTime = nowTime
 
 			while not (tickDelta < 1):
@@ -100,7 +119,10 @@ class GameInstance:
 			if nowTimer - timer > 1000:
 				timer = nowTimer
 				if reportRefreshRate:
-					print(f"TPS: {actualTPS}\nFPS: {actualFPS}")
+					fpsList.append(actualFPS)
+					while len(fpsList) > 60:
+						fpsList.pop(0)
+					print(f"TPS: {actualTPS}\nFPS: {actualFPS}\nAvg FPS: {fpsAverage(fpsList)}")
 				actualTPS = 0
 				actualFPS = 0
 
