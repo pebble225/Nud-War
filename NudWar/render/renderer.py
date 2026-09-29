@@ -9,13 +9,17 @@ from NudWar.game.camera import Camera
 from NudWar.game.nud import Nud
 from NudWar.game.portal import Portal
 
+from NudWar.manager.mapManager import MapManager
+
 from NudWar.render.window import Window
 from NudWar.utils.pumpy import *
 
 from NudWar.data.unitData import UnitData
-from NudWar.data.renderData import RenderData
+from NudWar.data.renderData import *
 
 from NudWar.game.transformGameObject import TransformGameObject
+
+from NudWar.data.mapData import MapData
 
 class Renderer:
 	"""
@@ -25,30 +29,32 @@ class Renderer:
 		self.map: Map = None
 		self.window: Window = None
 		self.camera: Camera = None
+		self.mapManager: MapManager = None
 		
 		self.unitData: UnitData = None
 		self.renderData: RenderData = None
+		self.mapData: MapData = None
 
-		# portal prefab data
-		self.portalCWRotation = [1.0, 0.0]
-		self.portalCCWRotation = [0.0, 1.0]
-
-	def ImportModules(self, map: Map, window: Window, camera: Camera):
+	def ImportModules(self, map: Map, window: Window, camera: Camera, mapManager: MapManager):
 		self.map = map
 		self.window = window
 		self.camera = camera
+		self.mapManager = mapManager
 
-	def ImportData(self, unitData: UnitData, renderData: RenderData):
+	def ImportData(self, unitData: UnitData, renderData: RenderData, mapData: MapData):
 		self.unitData = unitData
 		self.renderData = renderData
+		self.mapData = mapData
 	
-	def ToGameSpace(self, vertices: list[list[float, float]], transform: TransformGameObject):
+	def ToGameSpace(self, vertices: list[list[float, float]], region: Region, transform: TransformGameObject):
 		for  i, vertex in enumerate(vertices):
 			vertex = MultiplyVectors(vertex, transform.rot)
 			vertex[0] *= transform.GetW()
 			vertex[1] *= transform.GetH()
 			vertex[0] += transform.GetX()
 			vertex[1] += transform.GetY()
+			vertex[0] += region.GetX()
+			vertex[1] += region.GetY()
 
 			vertices[i] = vertex
 
@@ -86,41 +92,27 @@ class Renderer:
 			rectWidth
 		)
 	
-	def RenderSimpleNud(self, nud: Nud, color: tuple[int] = (255, 255, 255)):
-		vertices = self.renderData.GetBasicNudMesh()
+	def RenderSimpleNud(self, nud: Nud, region: Region, color: tuple[int] = (255, 255, 255)):
+		vertices = self.renderData.basicNudPrefab.GetMesh()
 
-		self.ToGameSpace(vertices, nud)
+		self.ToGameSpace(vertices, region, nud)
 		self.ToScreenSpace(vertices)
 		
 		pygame.draw.polygon(self.window.GetInstance(), color, vertices)
 
-	def RenderPortal(self, portal: Portal):
-		cwTendrilVertices = self.renderData.GetPortalTendril()
-		ccwTendrilVertices = self.renderData.GetPortalTendril()
+	def RenderPortal(self, portal: Portal, region: Region):
+		mesh = self.renderData.portalPrefab.GetMesh()
+		self.ToGameSpace(mesh, region, portal)
+		self.ToScreenSpace(mesh)
 
-		for i, vertex in enumerate(cwTendrilVertices):
-			vertex = MultiplyVectors(vertex, self.portalCWRotation)
-			cwTendrilVertices[i] = vertex
-		
-		for i, vertex in enumerate(ccwTendrilVertices):
-			vertex = MultiplyVectors(vertex, self.portalCCWRotation)
-			ccwTendrilVertices[i] = vertex
+		center = [[0, 0]]
 
-		self.ToGameSpace(cwTendrilVertices, portal)
-		self.ToScreenSpace(cwTendrilVertices)
+		self.ToGameSpace(center, region, portal)
+		self.ToScreenSpace(center)
+		center = center[0]
 
-		self.ToGameSpace(ccwTendrilVertices, portal)
-		self.ToScreenSpace(ccwTendrilVertices)
-
-		otherData = [[0, 0]]
-		self.ToGameSpace(otherData, portal)
-		self.ToScreenSpace(otherData)
-		centerCoordinate = otherData[0]
-
-		pygame.draw.polygon(self.window.GetInstance(), (112, 41, 41), cwTendrilVertices)
-		pygame.draw.polygon(self.window.GetInstance(), (31, 14, 145), ccwTendrilVertices)
-		pygame.draw.circle(self.window.GetInstance(), (180, 180, 180), centerCoordinate, self.renderData.PORTAL_EPICENTER_RADIUS * portal.GetW() * self.camera.GetW())
-
+		pygame.draw.polygon(self.window.GetInstance(), self.renderData.portalPrefab.PORTAL_TENDRIL_COLOR, mesh)
+		pygame.draw.circle(self.window.GetInstance(), self.renderData.portalPrefab.PORTAL_EPICENTER_COLOR, center, self.renderData.portalPrefab.PORTAL_EPICENTER_RADIUS * portal.GetW() * self.camera.GetW())
 
 	def FillBackground(self, color: tuple):
 		self.window.GetInstance().fill(color)
@@ -143,24 +135,25 @@ class Renderer:
 		"""
 		self.GridRegionRender(region)
 
-		for object in region.objects:
+		objects = list(region.objects)
+
+		for index, object in reversed(list(enumerate(objects))):
+			if isinstance(object, Portal):
+				self.RenderPortal(object, region)
+				objects.pop(index)
+
+		for index, object in reversed(list(enumerate(objects))):
 			if isinstance(object, Nud):
-				self.RenderSimpleNud(object)
+				self.RenderSimpleNud(object, region)
+				objects.pop(index)
 
 	def FixedUpdate(self):
-		self.portalCWRotation = MultiplyVectors(self.portalCWRotation, self.renderData.PORTAL_CW_TENDRIL_VECTOR)
-		self.portalCWRotation = normalizeVector(self.portalCWRotation)
-		self.portalCCWRotation = MultiplyVectors(self.portalCCWRotation, self.renderData.PORTAL_CCW_TENDRIL_VECTOR)
-		self.portalCCWRotation = normalizeVector(self.portalCCWRotation)
+		self.renderData.portalPrefab.FixedUpdate()
 	
 	def Update(self):
 		self.FillBackground((50, 50, 50))
 
-		portal = Portal()
-		portal.pos = [30, 40]
-		self.RenderPortal(portal)
-
-		for region in self.map.GetAllRegions():
+		for region in self.mapManager.GetAllRegions():
 			self.RenderRegion(region)
 
 		pygame.display.flip()

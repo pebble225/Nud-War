@@ -1,5 +1,6 @@
 #this could get merged with map manager depending on complexity
 
+from NudWar.game.gameObject import GameObject
 from NudWar.game.region import Region
 from NudWar.game.nud import Nud
 from NudWar.data.unitData import UnitData
@@ -28,6 +29,9 @@ class RegionManager:
 
 	def CreateBasicNud(self, region: Region, x: float = 0, y: float = 0) -> Nud:
 			nud = Nud(self.unitData.ToMetersPerTick(10.0), self.unitData.ToMetersPerTick(180.0))
-			nud.SetPosition(x + region.index[0]*Region.SIZE, y + region.index[1]*Region.SIZE)
+			nud.SetPosition(x, y)
 			region.objects.append(nud)
 			return nud
+
+	def AddGameObject(self, region: Region, gameObject: GameObject):
+		region.objects.append(gameObject)

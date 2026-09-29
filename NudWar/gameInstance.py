@@ -13,6 +13,7 @@ from NudWar.utils.rng import RNG, LCG
 
 from NudWar.data.unitData import UnitData
 from NudWar.data.renderData import RenderData
+from NudWar.data.mapData import MapData
 
 from NudWar.render.renderer import Renderer
 from NudWar.manager.nudManager import NudManager
@@ -26,7 +27,7 @@ class GameInstance:
 		self.window: Window = Window()
 		self.camera: Camera = Camera()
 		self.camera.name = "camera"
-		self.camera.SetScale(12.0)
+		self.camera.SetScale(10.0)
 		self.playerController: PlayerController = PlayerController()
 		self.playerController.SetTarget(self.camera)
 		self.map: Map = Map()
@@ -34,28 +35,55 @@ class GameInstance:
 
 		self.unitData = UnitData()
 		self.renderData = RenderData(self.unitData)
+		self.mapData = MapData()
+
+		self.camera.SetPosition(self.mapData.REGION_SIZE*2, self.mapData.REGION_SIZE*1.5)
 
 		self.renderer: Renderer = Renderer()
-		self.renderer.ImportModules(self.map, self.window, self.camera)
-		self.renderer.ImportData(self.unitData, self.renderData)
-
 		self.nudManager: NudManager = NudManager()
+		self.regionManager: RegionManager = RegionManager()
+		self.mapManager: MapManager = MapManager()
+
+		self.renderer.ImportModules(self.map, self.window, self.camera, self.mapManager)
+		self.renderer.ImportData(self.unitData, self.renderData, self.mapData)
+
 		self.nudManager.ImportModules(self.map, self.camera, self.window, self.ran)
 		self.nudManager.ImportData(self.unitData)
 
-		self.regionManager: RegionManager = RegionManager()
 		self.regionManager.ImportModules(self.nudManager, self.window)
 		self.regionManager.ImportData(self.unitData)
 
-		self.mapManager: MapManager = MapManager()
 		self.mapManager.ImportModules(self.map, self.regionManager)
-	
-	def Start(self):
+		self.mapManager.ImportData(self.mapData)
+
+	def BasicMap(self):
 		for y in range(3):
 			for x in range(4):
-				self.map.AddRegion(x, y)
-		for i in range(100):
-			self.regionManager.CreateBasicNud(self.map.GetRegion(0, 0), 40, 40)
+				region = self.mapManager.AddRegion(x, y)
+				n = self.ran.intRange(1, 5)
+				for i in range(n):
+					self.regionManager.CreateBasicNud(region, 40, 40)
+
+		self.mapManager.LinkHorizontal((0,0),(1,0))
+		self.mapManager.LinkVertical((1,0),(1,1))
+		self.mapManager.LinkVertical((1,1),(1,2))
+		self.mapManager.LinkHorizontal((0,2),(1,2))
+		self.mapManager.LinkVertical((0,1),(0,2))
+		self.mapManager.LinkVertical((0,0),(0,1))
+
+		self.mapManager.LinkHorizontal((1, 1), (2, 1))
+
+		self.mapManager.LinkVertical((2, 0), (2, 1))
+		self.mapManager.LinkHorizontal((2, 0), (3, 0))
+		self.mapManager.LinkVertical((3, 0), (3, 1))
+		self.mapManager.LinkVertical((3, 1), (3, 2))
+		self.mapManager.LinkHorizontal((2, 2), (3, 2))
+		self.mapManager.LinkVertical((2, 1), (2, 2))
+
+		self.mapManager.GeneratePortals()
+	
+	def Start(self):
+		self.BasicMap()
 	
 	def Input(self):
 		for e in pygame.event.get():
