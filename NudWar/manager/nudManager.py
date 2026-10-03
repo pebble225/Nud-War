@@ -6,7 +6,7 @@ from NudWar.render.window import Window
 from NudWar.utils.rng import RNG, LCG
 from NudWar.data.unitData import UnitData
 
-from NudWar.game.behavior.action import Action
+from NudWar.game.behavior.nud.action import Action
 from NudWar.game.behavior.nud.moveTo import MoveTo
 from NudWar.game.behavior.nud.wander import Wander
 

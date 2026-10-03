@@ -1,6 +1,6 @@
 from NudWar.game.transformGameObject import TransformGameObject
 
-from NudWar.game.behavior.action import Action
+from NudWar.game.behavior.nud.action import Action
 from NudWar.game.behavior.nud.moveTo import MoveTo
 
 class Nud(TransformGameObject):

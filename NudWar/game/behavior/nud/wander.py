@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
 
-from NudWar.game.behavior.action import Action
+from NudWar.game.behavior.nud.action import Action
 from NudWar.game.behavior.nud.idle import Idle
 from NudWar.game.behavior.nud.moveTo import MoveTo
 

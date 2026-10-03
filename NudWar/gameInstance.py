@@ -24,18 +24,19 @@ from NudWar.render.window import Window
 
 class GameInstance:
 	def __init__(self):
+
+		self.unitData = UnitData()
+		self.renderData = RenderData(self.unitData)
+		self.mapData = MapData()
+
 		self.window: Window = Window()
 		self.camera: Camera = Camera()
 		self.camera.name = "camera"
 		self.camera.SetScale(10.0)
 		self.playerController: PlayerController = PlayerController()
 		self.playerController.SetTarget(self.camera)
-		self.map: Map = Map()
+		self.map: Map = Map(self.mapData)
 		self.ran = LCG.NADS64bit()
-
-		self.unitData = UnitData()
-		self.renderData = RenderData(self.unitData)
-		self.mapData = MapData()
 
 		self.camera.SetPosition(self.mapData.REGION_SIZE*2, self.mapData.REGION_SIZE*1.5)
 

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from NudWar.game.behavior.action import Action
+from NudWar.game.behavior.nud.action import Action
 from NudWar.utils.timer import Timer
 
 if TYPE_CHECKING:

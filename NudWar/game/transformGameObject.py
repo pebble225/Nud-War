@@ -24,6 +24,9 @@ class TransformGameObject(GameObject):
 	def GetPosition(self) -> list:
 		return self.pos.copy()
 	
+	def GetPositionPlusOffet(self, offset: list[float, float]) -> list:
+		return [self.pos[0] + offset[0], self.pos[1] + offset[1]]
+	
 	def SetPosition(self, x: float, y: float):
 		self.pos[0] = x
 		self.pos[1] = y

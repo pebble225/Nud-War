@@ -37,6 +37,34 @@ class Region(TransformGameObject):
 			return Region.WEST
 		return None
 
+	def HasNorth(self) -> bool:
+		return self.north is not None
+	
+	def HasEast(self) -> bool:
+		return self.east is not None
+	
+	def HasSouth(self) -> bool:
+		return self.south is not None
+	
+	def HasWest(self) -> bool:
+		return self.west is not None
+
+	def GetAdjacents(self):
+		"""
+		Returns a list of all of the adjacent regions. 
+		"""
+		arr = []
+		if self.north is not None:
+			arr.append(self.north())
+		if self.east is not None:
+			arr.append(self.east())
+		if self.south is not None:
+			arr.append(self.south())
+		if self.west is not None:
+			arr.append(self.west())
+
+		return arr
+
 	def LinkRegion(self, direction: str, region: "Region"):
 		if direction == Region.NORTH:
 			self.north = weakref.ref(region)

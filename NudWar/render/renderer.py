@@ -69,7 +69,7 @@ class Renderer:
 			vertex[0] += center[0]
 			vertex[1] += center[1]
 
-	def RenderTopLeftBox(self, rect: tuple, color: tuple[int], rectWidth: int = 0):
+	def RenderTopLeftBox(self, rect: tuple, color: tuple[int] = (255, 255, 255), rectWidth: int = 0):
 		"""
 		
 		'Top-Left box' means that the coordinates of the box are at the top left.
@@ -77,17 +77,25 @@ class Renderer:
 		rect coordinates are in game space and the function transfers it to screen space
 
 		"""
+
+		if rect[2] == 0 or rect[3] == 0:
+			return
+
 		center = self.window.GetCenter()
+
+		x = rect[0] + rect[2] if rect[2] < 0 else rect[0]
+		y = rect[1] + rect[3] if rect[3] < 0 else rect[1]
+		width = np.abs(rect[2])
+		height = np.abs(rect[3])
 
 		pygame.draw.rect(
 			self.window.GetInstance(),
 			color,
 			(
-				(
-					rect[0] - self.camera.pos[0]) * self.camera.scale[0] + center[0],
-					(rect[1] - self.camera.pos[1]) * self.camera.scale[1] + center[1],
-					rect[2] * self.camera.scale[0],
-					rect[3] * self.camera.scale[1]
+				(x - self.camera.pos[0]) * self.camera.scale[0] + center[0],
+				(y - self.camera.pos[1]) * self.camera.scale[1] + center[1],
+				width * self.camera.scale[0],
+				height * self.camera.scale[1]
 			),
 			rectWidth
 		)
@@ -127,6 +135,38 @@ class Renderer:
 			1
 		)
 
+	def BorderRegionRender(self, region: Region):
+		# keeping constants here instead of mapData because these might not be final game variables
+
+		GATE_WIDTH = 6
+		WALL_THICKNESS = 3
+
+		REGION_SIZE = self.mapData.REGION_SIZE
+
+		topLeft = region.GetPosition()
+		topRight = region.GetPositionPlusOffet((REGION_SIZE, 0))
+		bottomLeft = region.GetPositionPlusOffet((0, REGION_SIZE))
+		bottomRight = region.GetPositionPlusOffet((REGION_SIZE, REGION_SIZE))
+
+		REGION_SIZE = self.mapData.REGION_SIZE
+
+		if region.HasNorth():
+			pass
+		else:
+			self.RenderTopLeftBox((*topLeft, REGION_SIZE, WALL_THICKNESS))
+		if region.HasEast():
+			pass
+		else:
+			self.RenderTopLeftBox((*topRight, -WALL_THICKNESS, REGION_SIZE))
+		if region.HasSouth():
+			...
+		else:
+			self.RenderTopLeftBox((*bottomLeft, REGION_SIZE, -WALL_THICKNESS))
+		if region.HasWest():
+			pass
+		else:
+			self.RenderTopLeftBox((*topLeft, WALL_THICKNESS, REGION_SIZE))
+
 	def RenderRegion(self, region: Region):
 		"""
 		
@@ -134,6 +174,7 @@ class Renderer:
 		
 		"""
 		self.GridRegionRender(region)
+		self.BorderRegionRender(region)
 
 		objects = list(region.objects)
 
