@@ -7,18 +7,11 @@ if TYPE_CHECKING:
 	from NudWar.game.nud import Nud
 
 class Action(GameObject):
-	FAILED = 0
-	COMPLETED = 1
-	RUNNING = 2
-
-	def __init__(self, parent: Nud):
+	def __init__(self, parentNud: Nud, parentAction: "Action" | None = None):
 		super().__init__()
-		self.parent = parent
+		self.parentNud = parentNud
+		self.parentAction = parentAction
 
 	@abstractmethod
-	def Update(self, gameTime: int) -> int:
-		raise NotImplementedError
-
-	@abstractmethod
-	def checkFlags(self):
+	def Update(self, gameTime: int) -> "Action":
 		raise NotImplementedError

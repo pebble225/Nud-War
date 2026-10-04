@@ -12,44 +12,34 @@ if TYPE_CHECKING:
 	from NudWar.game.nud import Nud
 
 class Wander(Action):
-	def __init__(self, parent: Nud, ran: LCG, unitData: UnitData):
-		super().__init__(parent)
+	def __init__(self, parent: Nud, ran: LCG, unitData: UnitData, parentAction: Action | None = None):
+		super().__init__(parent, parentAction)
 
-		self.parent = parent
 		self.nextAction = "idle"
 		self.ran = ran
 		self.unitData = unitData
 
-	def Update(self, gameTime: int) -> int:
+	def Update(self, gameTime: int) -> "Action":
 		if self.nextAction == "idle":
-			self.parent.AddNewAction(
-				Idle(
-					gameTime,
-					int(self.unitData.ToTicks(
-						self.ran.floatRange(2.0, 8.0) # replace both with constant
-					)),
-					self.parent
-				)
-			)
 			self.nextAction = "move"
 
-			return Action.RUNNING
-		elif self.nextAction == "move":
-			self.parent.AddNewAction(
-				MoveTo(  
-					[
-						self.ran.intRange(1, 99),
-						self.ran.intRange(1, 99)
-					],
-					self.parent,
-					self.unitData.ToMetersPerTick(6) # replace with constant
-				)
+			return Idle(
+				gameTime,
+				int(self.unitData.ToTicks(self.ran.floatRange(2.0, 8.0))),
+				self.parentNud,
+				self
 			)
+		elif self.nextAction == "move":
 			self.nextAction = "idle"
 
-			return Action.RUNNING
+			return MoveTo(
+				[
+					self.ran.intRange(1, 99),
+					self.ran.intRange(1, 99)
+				],
+				self.parentNud,
+				self,
+				self.unitData.ToMetersPerTick(6) # replace with constant
+			)
 		else:
-			return Action.FAILED
-
-	def checkFlags(self):
-		pass
+			return None

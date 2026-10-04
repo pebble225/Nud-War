@@ -102,6 +102,9 @@ class Renderer:
 	
 	def RenderSimpleNud(self, nud: Nud, region: Region, color: tuple[int] = (255, 255, 255)):
 		vertices = self.renderData.basicNudPrefab.GetMesh()
+		for vertex in vertices:
+			vertex[0] *= 2
+			vertex[1] *= 2
 
 		self.ToGameSpace(vertices, region, nud)
 		self.ToScreenSpace(vertices)
@@ -138,8 +141,8 @@ class Renderer:
 	def BorderRegionRender(self, region: Region):
 		# keeping constants here instead of mapData because these might not be final game variables
 
-		GATE_WIDTH = 6
-		WALL_THICKNESS = 3
+		GATE_WIDTH = 14
+		WALL_THICKNESS = 2
 
 		REGION_SIZE = self.mapData.REGION_SIZE
 
@@ -150,20 +153,26 @@ class Renderer:
 
 		REGION_SIZE = self.mapData.REGION_SIZE
 
+		GATED_WALL_LENGTH = int(REGION_SIZE/2 - GATE_WIDTH/2)
+
 		if region.HasNorth():
-			pass
+			self.RenderTopLeftBox((*topLeft, GATED_WALL_LENGTH, WALL_THICKNESS))
+			self.RenderTopLeftBox((*topRight, -GATED_WALL_LENGTH, WALL_THICKNESS))
 		else:
 			self.RenderTopLeftBox((*topLeft, REGION_SIZE, WALL_THICKNESS))
 		if region.HasEast():
-			pass
+			self.RenderTopLeftBox((*topRight, -WALL_THICKNESS, GATED_WALL_LENGTH))
+			self.RenderTopLeftBox((*bottomRight, -WALL_THICKNESS, -GATED_WALL_LENGTH))
 		else:
 			self.RenderTopLeftBox((*topRight, -WALL_THICKNESS, REGION_SIZE))
 		if region.HasSouth():
-			...
+			self.RenderTopLeftBox((*bottomLeft, GATED_WALL_LENGTH, -WALL_THICKNESS))
+			self.RenderTopLeftBox((*bottomRight, -GATED_WALL_LENGTH, -WALL_THICKNESS))
 		else:
 			self.RenderTopLeftBox((*bottomLeft, REGION_SIZE, -WALL_THICKNESS))
 		if region.HasWest():
-			pass
+			self.RenderTopLeftBox((*topLeft, WALL_THICKNESS, GATED_WALL_LENGTH))
+			self.RenderTopLeftBox((*bottomLeft, WALL_THICKNESS, -GATED_WALL_LENGTH))
 		else:
 			self.RenderTopLeftBox((*topLeft, WALL_THICKNESS, REGION_SIZE))
 
@@ -173,7 +182,6 @@ class Renderer:
 		Entry method for rendering a region. This includes the rendering of all objects within the region.
 		
 		"""
-		self.GridRegionRender(region)
 		self.BorderRegionRender(region)
 
 		objects = list(region.objects)

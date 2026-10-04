@@ -36,8 +36,9 @@ class NudManager:
 		self.unitData = unitData
 	
 	def Entry(self, nud: Nud, currentRegion: Region):
-		if len(nud.actionQueue) < 1:
+		if nud.action is None:
 			nud.AddNewAction(Wander(nud, self.ran, self.unitData))
-		action: Action = nud.actionQueue[-1]
-		if action.Update(self.window.gameTime) == Action.COMPLETED:
-			nud.RemoveLastAction()
+
+		nud.action = nud.action.Update(self.window.gameTime)
+
+		
