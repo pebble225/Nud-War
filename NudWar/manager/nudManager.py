@@ -44,8 +44,8 @@ class NudManager:
 		if nud.action is None:
 
 
-			#nud.AddNewAction(Wander(nud, self.ran, self.database)) #pylance sees nud as a Never type
-			nud.AddNewAction(Navigate(currentRegion, self.map.GetRegion(3, 0), self.map, nud, self.database, Wander(nud, self.ran, self.database)))
+			nud.AddNewAction(Wander(nud, self.ran, self.database))
+			#nud.AddNewAction(Navigate(currentRegion, self.map.GetRegion(1, 1), self.map, nud, self.database, Wander(nud, self.ran, self.database)))
 
 		assert nud.action is not None
 		

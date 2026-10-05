@@ -22,6 +22,12 @@ def divideVectors(vecA: tuple[float], vecB: tuple[float]):
 		(vecA[1]*vecB[0]-vecA[0]*vecB[1])/n
 	]
 
+def minValue(a, b):
+	return a if a < b else b
+
+def maxValue(a, b):
+	return a if a > b else b
+
 def dotProductSum(vecA: tuple[float], vecB: tuple[float]):
 	return vecA[0]*vecB[0]+vecA[1]*vecB[1]
 

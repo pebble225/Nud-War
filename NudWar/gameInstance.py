@@ -42,7 +42,7 @@ class GameInstance:
 		self.map: Map = Map(self.mapData)
 		self.ran = LCG.NADS64bit()
 
-		self.camera.SetPosition(self.mapData.REGION_SIZE*0.5, self.mapData.REGION_SIZE*0.5)
+		self.camera.SetPosition(self.mapData.REGION_SIZE*2.0, self.mapData.REGION_SIZE*1.5)
 
 		self.renderer: Renderer = Renderer()
 		self.nudManager: NudManager = NudManager()
@@ -67,10 +67,8 @@ class GameInstance:
 				region = self.mapManager.AddRegion(x, y)
 				n = self.ran.intRange(1, 5)
 
-				if x == 0 and y == 0:
-					self.regionManager.CreateBasicNud(region, 40, 40)
 				for i in range(n):
-					pass#self.regionManager.CreateBasicNud(region, 40, 40)
+					self.regionManager.CreateBasicNud(region, 40, 40)
 
 		self.mapManager.LinkHorizontal((0,0),(1,0))
 		self.mapManager.LinkVertical((1,0),(1,1))

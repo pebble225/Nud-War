@@ -8,3 +8,8 @@ class MapData:
 
 		self.PATHING_STEP_WEIGHT = 1.00 # percetage / 100
 		self.PATHING_DISTANCE_WEIGHT = 1.00 # percentage / 100
+
+		self.BORDER_PADDING = 6 # meters
+		"""
+		The distance that game objects need to be from the region border
+		"""
