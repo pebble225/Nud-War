@@ -14,6 +14,15 @@ class Map(GameObject):
 
 		self.mapData = mapData
 
+	def GetAllRegions(self) -> list[Region]:
+		return list(self.regions.values())
+	
+	def GetRegion(self, x: int, y: int) -> Region | None:
+		if (x, y) in self.regions:
+			return self.regions[(x, y)]
+		else:
+			return None
+
 	def GetUnweightedPath(self, start: Region, end: Region, allRegions: list[Region]):
 		if start is end:
 			return [start]

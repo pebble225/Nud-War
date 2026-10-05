@@ -21,7 +21,7 @@ class MapManager:
 		self.database = database
 	
 	def GetAllRegions(self) -> list[Region]:
-		return list(self.map.regions.values())
+		return self.map.GetAllRegions()
 	
 	def AddRegion(self, x: int, y: int) -> Region:
 		"""
@@ -32,10 +32,7 @@ class MapManager:
 		return region
 	
 	def GetRegion(self, x: int, y: int) -> Region | None:
-		if (x, y) in self.map.regions:
-			return self.map.regions[(x, y)]
-		else:
-			return None
+		return self.map.GetRegion(x, y)
 
 	def UpdateAll(self):
 		"""

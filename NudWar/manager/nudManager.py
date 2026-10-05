@@ -13,6 +13,7 @@ from NudWar.game.behavior.nud.action import Action
 from NudWar.game.behavior.nud.moveTo import MoveTo
 from NudWar.game.behavior.nud.wander import Wander
 from NudWar.game.behavior.nud.travelTo import TravelTo
+from NudWar.game.behavior.nud.navigate import Navigate
 
 from NudWar.utils.pumpy import *
 
@@ -44,7 +45,7 @@ class NudManager:
 
 
 			#nud.AddNewAction(Wander(nud, self.ran, self.database)) #pylance sees nud as a Never type
-			nud.AddNewAction(TravelTo(nud, currentRegion, currentRegion.east, self.database, Wander(nud, self.ran, self.database)))
+			nud.AddNewAction(Navigate(currentRegion, self.map.GetRegion(3, 0), self.map, nud, self.database, Wander(nud, self.ran, self.database)))
 
 		assert nud.action is not None
 		
