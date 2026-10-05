@@ -23,5 +23,5 @@ class Idle(Action):
 			return self.parentAction
 		else:
 			if self.whileIdle is not None:
-				self.whileIdle.Update(gameTime)
+				self.whileIdle = self.whileIdle.Update(gameTime)
 			return self

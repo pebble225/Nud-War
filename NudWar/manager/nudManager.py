@@ -14,6 +14,7 @@ from NudWar.game.behavior.nud.moveTo import MoveTo
 from NudWar.game.behavior.nud.wander import Wander
 from NudWar.game.behavior.nud.travelTo import TravelTo
 from NudWar.game.behavior.nud.navigate import Navigate
+from NudWar.game.behavior.nud.nomad import Nomad
 
 from NudWar.utils.pumpy import *
 
@@ -44,11 +45,13 @@ class NudManager:
 		if nud.action is None:
 
 
-			nud.AddNewAction(Wander(nud, self.ran, self.database))
-			#nud.AddNewAction(Navigate(currentRegion, self.map.GetRegion(1, 1), self.map, nud, self.database, Wander(nud, self.ran, self.database)))
+			nud.AddNewAction(Nomad(self.database, self.ran, nud, self.map, currentRegion))
 
 		assert nud.action is not None
-		
-		nud.action = nud.action.Update(self.window.gameTime)
+
+		if isinstance(nud.action, Nomad):
+			nud.action = nud.action.Update2(self.window.gameTime, currentRegion)
+		else:
+			nud.action = nud.action.Update(self.window.gameTime)
 
 		

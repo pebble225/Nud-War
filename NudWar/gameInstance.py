@@ -65,7 +65,7 @@ class GameInstance:
 		for y in range(3):
 			for x in range(4):
 				region = self.mapManager.AddRegion(x, y)
-				n = self.ran.intRange(1, 5)
+				n = self.ran.intRange(1, 10)
 
 				for i in range(n):
 					self.regionManager.CreateBasicNud(region, 40, 40)
