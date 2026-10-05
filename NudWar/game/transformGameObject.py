@@ -31,6 +31,10 @@ class TransformGameObject(GameObject):
 		self.pos[0] = x
 		self.pos[1] = y
 	
+	def SetPosition2(self, pos: list[float, float]):
+		self.pos[0] = pos[0]
+		self.pos[1] = pos[1]
+	
 	def GetW(self) -> float:
 		return self.scale[0]
 
@@ -48,6 +52,11 @@ class TransformGameObject(GameObject):
 			self.scale[0] = w
 			self.scale[1] = h
 
+	def IsWithinDistanceTo(self, obj: "TransformGameObject", tolerance: float = 1) -> bool:
+		"""
+		@param tolerance distance in meters
+		"""
+		return not (distanceFormula(self.pos, obj.pos) > tolerance)
 
 	def GetRotationAngle(self) -> float:
 		return math.degrees(math.atan2(self.rot[1], self.rot[0])) % 360.0
@@ -87,6 +96,9 @@ class TransformGameObject(GameObject):
 		self.NudgeRight(-distance)
 	
 	def RotateByAngle(self, degree: float):
+		"""
+		@param degree degrees/tick
+		"""
 		radian = math.radians(degree % 360)
 		vector = [math.cos(radian), math.sin(radian)]
 		self.rot = MultiplyVectors(self.rot, vector)

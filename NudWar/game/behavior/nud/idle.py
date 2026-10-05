@@ -10,7 +10,7 @@ class Idle(Action):
 	def __init__(self, gameTime: int, duration: int, parentNud: Nud, parentAction: Action):
 		"""
 		@param gameTime The current in game time in ticks.
-		@param waitTime The amount of time needed to wait in ticks.
+		@param duration The amount of time needed to wait in ticks.
 		"""
 		super().__init__(parentNud, parentAction)
 		self.parentNud = parentNud

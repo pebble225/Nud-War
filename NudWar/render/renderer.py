@@ -14,6 +14,7 @@ from NudWar.manager.mapManager import MapManager
 from NudWar.render.window import Window
 from NudWar.utils.pumpy import *
 
+from NudWar.data.dataBase import DataBase
 from NudWar.data.unitData import UnitData
 from NudWar.data.renderData import *
 
@@ -31,9 +32,7 @@ class Renderer:
 		self.camera: Camera = None
 		self.mapManager: MapManager = None
 		
-		self.unitData: UnitData = None
-		self.renderData: RenderData = None
-		self.mapData: MapData = None
+		self.database: DataBase = None
 
 	def ImportModules(self, map: Map, window: Window, camera: Camera, mapManager: MapManager):
 		self.map = map
@@ -41,10 +40,8 @@ class Renderer:
 		self.camera = camera
 		self.mapManager = mapManager
 
-	def ImportData(self, unitData: UnitData, renderData: RenderData, mapData: MapData):
-		self.unitData = unitData
-		self.renderData = renderData
-		self.mapData = mapData
+	def ImportData(self, database: DataBase):
+		self.database = database
 	
 	def ToGameSpace(self, vertices: list[list[float, float]], region: Region, transform: TransformGameObject):
 		for  i, vertex in enumerate(vertices):
@@ -101,7 +98,8 @@ class Renderer:
 		)
 	
 	def RenderSimpleNud(self, nud: Nud, region: Region, color: tuple[int] = (255, 255, 255)):
-		vertices = self.renderData.basicNudPrefab.GetMesh()
+		renderData = self.database.renderData
+		vertices = renderData.basicNudPrefab.GetMesh()
 		for vertex in vertices:
 			vertex[0] *= 2
 			vertex[1] *= 2
@@ -112,7 +110,9 @@ class Renderer:
 		pygame.draw.polygon(self.window.GetInstance(), color, vertices)
 
 	def RenderPortal(self, portal: Portal, region: Region):
-		mesh = self.renderData.portalPrefab.GetMesh()
+		renderData = self.database.renderData
+
+		mesh = renderData.portalPrefab.GetMesh()
 		self.ToGameSpace(mesh, region, portal)
 		self.ToScreenSpace(mesh)
 
@@ -122,8 +122,8 @@ class Renderer:
 		self.ToScreenSpace(center)
 		center = center[0]
 
-		pygame.draw.polygon(self.window.GetInstance(), self.renderData.portalPrefab.PORTAL_TENDRIL_COLOR, mesh)
-		pygame.draw.circle(self.window.GetInstance(), self.renderData.portalPrefab.PORTAL_EPICENTER_COLOR, center, self.renderData.portalPrefab.PORTAL_EPICENTER_RADIUS * portal.GetW() * self.camera.GetW())
+		pygame.draw.polygon(self.window.GetInstance(), renderData.portalPrefab.PORTAL_TENDRIL_COLOR, mesh)
+		pygame.draw.circle(self.window.GetInstance(), renderData.portalPrefab.PORTAL_EPICENTER_COLOR, center, renderData.portalPrefab.PORTAL_EPICENTER_RADIUS * portal.GetW() * self.camera.GetW())
 
 	def FillBackground(self, color: tuple):
 		self.window.GetInstance().fill(color)
@@ -139,19 +139,20 @@ class Renderer:
 		)
 
 	def BorderRegionRender(self, region: Region):
-		# keeping constants here instead of mapData because these might not be final game variables
+		mapData = self.database.mapData
 
+		# keeping constants here instead of mapData because these might not be final game variables
 		GATE_WIDTH = 14
 		WALL_THICKNESS = 2
 
-		REGION_SIZE = self.mapData.REGION_SIZE
+		REGION_SIZE = mapData.REGION_SIZE
 
 		topLeft = region.GetPosition()
 		topRight = region.GetPositionPlusOffet((REGION_SIZE, 0))
 		bottomLeft = region.GetPositionPlusOffet((0, REGION_SIZE))
 		bottomRight = region.GetPositionPlusOffet((REGION_SIZE, REGION_SIZE))
 
-		REGION_SIZE = self.mapData.REGION_SIZE
+		REGION_SIZE = mapData.REGION_SIZE
 
 		GATED_WALL_LENGTH = int(REGION_SIZE/2 - GATE_WIDTH/2)
 
@@ -197,7 +198,10 @@ class Renderer:
 				objects.pop(index)
 
 	def FixedUpdate(self):
-		self.renderData.portalPrefab.FixedUpdate()
+		"""
+		Used to update animations that occur in a fixed timeframe
+		"""
+		self.database.renderData.portalPrefab.FixedUpdate()
 	
 	def Update(self):
 		self.FillBackground((50, 50, 50))

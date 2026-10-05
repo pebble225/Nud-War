@@ -3,6 +3,7 @@ from NudWar.game.region import Region
 from NudWar.manager.regionManager import RegionManager
 from NudWar.game.portal import Portal
 
+from NudWar.data.dataBase import DataBase
 from NudWar.data.mapData import MapData
 
 class MapManager:
@@ -10,14 +11,14 @@ class MapManager:
 		self.map: Map = None
 		self.regionManager: RegionManager = None
 
-		self.mapData: MapData = None
+		self.database: DataBase = None
 
 	def ImportModules(self, map: Map, regionManager: RegionManager):
 		self.map = map
 		self.regionManager = regionManager
 
-	def ImportData(self, mapData: MapData):
-		self.mapData = mapData
+	def ImportData(self, database: DataBase):
+		self.database = database
 	
 	def GetAllRegions(self) -> list[Region]:
 		return list(self.map.regions.values())
@@ -70,33 +71,42 @@ class MapManager:
 		Please don't run this more than once per map lol.
 		"""
 
+		mapData = self.database.mapData
+		REGION_SIZE = mapData.REGION_SIZE
+		PORTAL_DISTANCE_TO_EDGE = mapData.PORTAL_DISTANCE_TO_EDGE
+
+
 		regions = self.GetAllRegions()
 
 		for region in regions:
 			if region.south is not None:
-				south = region.south()
+				south: Region = region.south
 
 				portal = Portal()
-				portal.SetPosition(self.mapData.REGION_SIZE//2, self.mapData.REGION_SIZE - self.mapData.PORTAL_DISTANCE_TO_EDGE)
+				region.southPortal = portal
+				portal.SetPosition(REGION_SIZE//2, REGION_SIZE - PORTAL_DISTANCE_TO_EDGE)
 				self.regionManager.AddGameObject(region, portal)
 
-				southportal = Portal()
-				southportal.SetPosition(self.mapData.REGION_SIZE//2, self.mapData.PORTAL_DISTANCE_TO_EDGE)
-				self.regionManager.AddGameObject(south, southportal)
+				southRegionPortal = Portal()
+				south.northPortal = southRegionPortal
+				southRegionPortal.SetPosition(REGION_SIZE//2, PORTAL_DISTANCE_TO_EDGE)
+				self.regionManager.AddGameObject(south, southRegionPortal)
 
-				portal.AddDestination(southportal)
-				southportal.AddDestination(portal)
+				portal.AddDestination(southRegionPortal)
+				southRegionPortal.AddDestination(portal)
 
 			if region.east is not None:
-				east = region.east()
+				east: Region = region.east
 
 				portal = Portal()
-				portal.SetPosition(self.mapData.REGION_SIZE - self.mapData.PORTAL_DISTANCE_TO_EDGE, self.mapData.REGION_SIZE//2)
+				region.eastPortal = portal
+				portal.SetPosition(REGION_SIZE - PORTAL_DISTANCE_TO_EDGE, REGION_SIZE//2)
 				self.regionManager.AddGameObject(region, portal)
 
-				eastportal = Portal()
-				eastportal.SetPosition(self.mapData.PORTAL_DISTANCE_TO_EDGE, self.mapData.REGION_SIZE//2)
-				self.regionManager.AddGameObject(east, eastportal)
+				eastRegionPortal = Portal()
+				east.westPortal = eastRegionPortal
+				eastRegionPortal.SetPosition(PORTAL_DISTANCE_TO_EDGE, REGION_SIZE//2)
+				self.regionManager.AddGameObject(east, eastRegionPortal)
 
-				portal.AddDestination(eastportal)
-				eastportal.AddDestination(portal)
+				portal.AddDestination(eastRegionPortal)
+				eastRegionPortal.AddDestination(portal)

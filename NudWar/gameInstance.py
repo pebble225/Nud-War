@@ -14,6 +14,8 @@ from NudWar.utils.rng import RNG, LCG
 from NudWar.data.unitData import UnitData
 from NudWar.data.renderData import RenderData
 from NudWar.data.mapData import MapData
+from NudWar.data.behaviorData import BehaviorData
+from NudWar.data.dataBase import DataBase
 
 from NudWar.render.renderer import Renderer
 from NudWar.manager.nudManager import NudManager
@@ -25,9 +27,11 @@ from NudWar.render.window import Window
 class GameInstance:
 	def __init__(self):
 
-		self.unitData = UnitData()
-		self.renderData = RenderData(self.unitData)
-		self.mapData = MapData()
+		self.dataBase = DataBase()
+		self.unitData = self.dataBase.unitData
+		self.renderData = self.dataBase.renderData
+		self.mapData = self.dataBase.mapData
+		
 
 		self.window: Window = Window()
 		self.camera: Camera = Camera()
@@ -38,7 +42,7 @@ class GameInstance:
 		self.map: Map = Map(self.mapData)
 		self.ran = LCG.NADS64bit()
 
-		self.camera.SetPosition(self.mapData.REGION_SIZE*2, self.mapData.REGION_SIZE*1.5)
+		self.camera.SetPosition(self.mapData.REGION_SIZE*0.5, self.mapData.REGION_SIZE*0.5)
 
 		self.renderer: Renderer = Renderer()
 		self.nudManager: NudManager = NudManager()
@@ -46,24 +50,27 @@ class GameInstance:
 		self.mapManager: MapManager = MapManager()
 
 		self.renderer.ImportModules(self.map, self.window, self.camera, self.mapManager)
-		self.renderer.ImportData(self.unitData, self.renderData, self.mapData)
+		self.renderer.ImportData(self.dataBase)
 
 		self.nudManager.ImportModules(self.map, self.camera, self.window, self.ran)
-		self.nudManager.ImportData(self.unitData)
+		self.nudManager.ImportData(self.dataBase)
 
 		self.regionManager.ImportModules(self.nudManager, self.window)
-		self.regionManager.ImportData(self.unitData)
+		self.regionManager.ImportData(self.dataBase)
 
 		self.mapManager.ImportModules(self.map, self.regionManager)
-		self.mapManager.ImportData(self.mapData)
+		self.mapManager.ImportData(self.dataBase)
 
 	def BasicMap(self):
 		for y in range(3):
 			for x in range(4):
 				region = self.mapManager.AddRegion(x, y)
 				n = self.ran.intRange(1, 5)
-				for i in range(n):
+
+				if x == 0 and y == 0:
 					self.regionManager.CreateBasicNud(region, 40, 40)
+				for i in range(n):
+					pass#self.regionManager.CreateBasicNud(region, 40, 40)
 
 		self.mapManager.LinkHorizontal((0,0),(1,0))
 		self.mapManager.LinkVertical((1,0),(1,1))

@@ -5,6 +5,7 @@ from NudWar.game.behavior.nud.action import Action
 from NudWar.game.behavior.nud.idle import Idle
 from NudWar.game.behavior.nud.moveTo import MoveTo
 
+from NudWar.data.dataBase import DataBase
 from NudWar.data.unitData import UnitData
 from NudWar.utils.rng import LCG
 
@@ -12,12 +13,12 @@ if TYPE_CHECKING:
 	from NudWar.game.nud import Nud
 
 class Wander(Action):
-	def __init__(self, parent: Nud, ran: LCG, unitData: UnitData, parentAction: Action | None = None):
+	def __init__(self, parent: Nud, ran: LCG, database: UnitData, parentAction: Action | None = None):
 		super().__init__(parent, parentAction)
 
 		self.nextAction = "idle"
 		self.ran = ran
-		self.unitData = unitData
+		self.unitData = database.unitData
 
 	def Update(self, gameTime: int) -> "Action":
 		if self.nextAction == "idle":

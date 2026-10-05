@@ -13,7 +13,7 @@ class Nud(TransformGameObject):
 
 		self.SetScale(1.0)
 
-		self.action: Action = None
+		self.action: Action | None = None
 
 		# moveSpeed is measured in units per tick
 		# rotationSpeed is measured in degrees per tick

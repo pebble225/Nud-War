@@ -3,6 +3,8 @@
 from NudWar.game.gameObject import GameObject
 from NudWar.game.region import Region
 from NudWar.game.nud import Nud
+
+from NudWar.data.dataBase import DataBase
 from NudWar.data.unitData import UnitData
 
 from NudWar.manager.nudManager import NudManager
@@ -13,14 +15,14 @@ class RegionManager:
 		self.nudManager: NudManager = None
 		self.window: Window = None
 
-		self.unitData: UnitData = None
+		self.database: UnitData = None
 
 	def ImportModules(self, nudManager: NudManager, window: Window):
 		self.nudManager = nudManager
 		self.window = window
 
-	def ImportData(self, unitData: UnitData):
-		self.unitData = unitData
+	def ImportData(self, database: UnitData):
+		self.database = database
 
 	def RealTimeUpdate(self, region: Region):
 		for obj in region.objects:
@@ -28,7 +30,8 @@ class RegionManager:
 				self.nudManager.Entry(obj, region)
 
 	def CreateBasicNud(self, region: Region, x: float = 0, y: float = 0) -> Nud:
-			nud = Nud(self.unitData.ToMetersPerTick(10.0), self.unitData.ToMetersPerTick(180.0))
+			unitData = self.database.unitData
+			nud = Nud(unitData.ToMetersPerTick(10.0), unitData.ToMetersPerTick(180.0))
 			nud.SetPosition(x, y)
 			region.objects.append(nud)
 			return nud
