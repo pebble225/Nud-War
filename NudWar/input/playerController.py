@@ -92,6 +92,7 @@ class PlayerController:
 					self.target.scale[0] /= 2
 					self.target.scale[1] /= 2
 					self.target.moveSpeed *= 2
+			self.target.prevPos = list(self.target.pos)
 
 	
 	def SetTarget(self, target: TransformGameObject):

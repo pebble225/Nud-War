@@ -55,11 +55,17 @@ class Renderer:
 
 			vertices[i] = vertex
 
-	def ToScreenSpace(self, vertices: list[list[float, float]]):
+	def ToScreenSpace(self, delta: float, vertices: list[list[float, float]]):
+
+		cameraPos = self.camera.pos if self.camera.prevPos is None else [
+			self.camera.prevPos[0] + (self.camera.pos[0] - self.camera.prevPos[0]) * delta,
+			self.camera.prevPos[1] + (self.camera.pos[1] - self.camera.prevPos[1]) * delta,
+		]
+
 		center = self.window.GetCenter()
 		for vertex in vertices:
-			vertex[0] -= self.camera.GetX()
-			vertex[1] -= self.camera.GetY()
+			vertex[0] -= cameraPos[0]
+			vertex[1] -= cameraPos[1]
 			vertex[0] *= self.camera.GetW()
 			vertex[1] *= self.camera.GetH()
 
@@ -69,10 +75,6 @@ class Renderer:
 	def RenderTopLeftBox(self, rect: tuple, color: tuple[int] = (255, 255, 255), rectWidth: int = 0):
 		"""
 		
-		'Top-Left box' means that the coordinates of the box are at the top left.
-		
-		rect coordinates are in game space and the function transfers it to screen space
-
 		"""
 
 		if rect[2] == 0 or rect[3] == 0:
@@ -97,7 +99,7 @@ class Renderer:
 			rectWidth
 		)
 	
-	def RenderSimpleNud(self, nud: Nud, region: Region, color: tuple[int] = (255, 255, 255)):
+	def RenderSimpleNud(self, nud: Nud, region: Region, delta: float, color: tuple[int] = (255, 255, 255)):
 		renderData = self.database.renderData
 		vertices = renderData.basicNudPrefab.GetMesh()
 		for vertex in vertices:
@@ -105,21 +107,21 @@ class Renderer:
 			vertex[1] *= 2
 
 		self.ToGameSpace(vertices, region, nud)
-		self.ToScreenSpace(vertices)
+		self.ToScreenSpace(delta, vertices)
 		
 		pygame.draw.polygon(self.window.GetInstance(), color, vertices)
 
-	def RenderPortal(self, portal: Portal, region: Region):
+	def RenderPortal(self, delta: float, portal: Portal, region: Region):
 		renderData = self.database.renderData
 
 		mesh = renderData.portalPrefab.GetMesh()
 		self.ToGameSpace(mesh, region, portal)
-		self.ToScreenSpace(mesh)
+		self.ToScreenSpace(delta, mesh)
 
 		center = [[0, 0]]
 
 		self.ToGameSpace(center, region, portal)
-		self.ToScreenSpace(center)
+		self.ToScreenSpace(delta, center)
 		center = center[0]
 
 		pygame.draw.polygon(self.window.GetInstance(), renderData.portalPrefab.PORTAL_TENDRIL_COLOR, mesh)
@@ -177,7 +179,7 @@ class Renderer:
 		else:
 			self.RenderTopLeftBox((*topLeft, WALL_THICKNESS, REGION_SIZE))
 
-	def RenderRegion(self, region: Region):
+	def RenderRegion(self, region: Region, delta: float):
 		"""
 		
 		Entry method for rendering a region. This includes the rendering of all objects within the region.
@@ -189,12 +191,12 @@ class Renderer:
 
 		for index, object in reversed(list(enumerate(objects))):
 			if isinstance(object, Portal):
-				self.RenderPortal(object, region)
+				self.RenderPortal(delta, object, region)
 				objects.pop(index)
 
 		for index, object in reversed(list(enumerate(objects))):
 			if isinstance(object, Nud):
-				self.RenderSimpleNud(object, region)
+				self.RenderSimpleNud(object, region, delta)
 				objects.pop(index)
 
 	def FixedUpdate(self):
@@ -203,10 +205,10 @@ class Renderer:
 		"""
 		self.database.renderData.portalPrefab.FixedUpdate()
 	
-	def Update(self):
+	def Update(self, delta: float):
 		self.FillBackground((50, 50, 50))
 
 		for region in self.mapManager.GetAllRegions():
-			self.RenderRegion(region)
+			self.RenderRegion(region, delta)
 
 		pygame.display.flip()

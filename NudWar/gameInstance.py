@@ -117,15 +117,17 @@ class GameInstance:
 
 		lastTime = pygame.time.get_ticks()
 
-		fps = 60.0
+		fps = 144.0
 		frameMS = 1000.0 / fps
 		actualFPS = 0
 
 		lastFrame = pygame.time.get_ticks()
 
+		frameDelta = 0.0
+
 		timer = pygame.time.get_ticks()
 
-		reportRefreshRate = False #this needs to be moved to constants
+		reportRefreshRate = False #this needs to be moved to a data class
 
 		self.Start()
 
@@ -149,9 +151,17 @@ class GameInstance:
 				self.window.gameTime += 1
 				actualTPS += 1
 				tickDelta -= 1.0
-			
-			self.renderer.Update()
-			actualFPS += 1
+
+			nowFrame = pygame.time.get_ticks()
+			frameDelta += float(nowFrame-lastFrame) / frameMS
+			lastFrame = nowFrame
+
+			while not (frameDelta < 1):
+				if frameDelta > 10:
+					frameDelta = 0
+					break
+				self.renderer.Update(tickDelta)
+				frameDelta -= 1
 			
 			nowTimer = pygame.time.get_ticks()
 			if nowTimer - timer > 1000:
