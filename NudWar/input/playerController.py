@@ -2,6 +2,7 @@ from NudWar.game.transformGameObject import TransformGameObject
 from NudWar.game.camera import Camera
 
 import pygame
+from pygame.locals import *
 
 class PlayerController:
 	def __init__(self):
@@ -9,6 +10,9 @@ class PlayerController:
 		self.DOWN = False
 		self.LEFT = False
 		self.RIGHT = False
+
+		self.clearScrollEvent = False
+		self.SCROLL_EVENT: int | None = None
 
 		self.target: TransformGameObject = None
 	
@@ -31,6 +35,10 @@ class PlayerController:
 				self.LEFT = False
 			elif e.key == pygame.K_d or e.key == pygame.K_RIGHT:
 				self.RIGHT = False
+		elif e.type == pygame.MOUSEWHEEL:
+			if e.y != 0:
+				self.SCROLL_EVENT = e.y
+
 
 	def GetUp(self) -> bool:
 		return self.UP
@@ -50,19 +58,41 @@ class PlayerController:
 	def GetBackward(self) -> bool:
 		return self.DOWN
 
+	def GetScrollEvent(self) -> int | None:
+		self.clearScrollEvent = True
+
+		return self.SCROLL_EVENT
+
+	def ClearScrollEvent(self):
+		if self.clearScrollEvent:
+			self.clearScrollEvent = False
+			self.SCROLL_EVENT = None
+
 	def Update(self):
 		#0.707106
 
 		if isinstance(self.target, Camera):
 			if self.GetUp():
-				self.target.Nudge(0.0, -1.0)
+				self.target.NudgeCamera(0.0, -1.0)
 			elif self.GetDown():
-				self.target.Nudge(0.0, 1.0)
+				self.target.NudgeCamera(0.0, 1.0)
 			
 			if self.GetLeft():
-				self.target.Nudge(-1.0, 0.0)
+				self.target.NudgeCamera(-1.0, 0.0)
 			elif self.GetRight():
-				self.target.Nudge(1.0, 0.0)
+				self.target.NudgeCamera(1.0, 0.0)
+			
+			scroll = self.GetScrollEvent()
+			if scroll is not None:
+				if scroll > 0:
+					self.target.scale[0] *= 2
+					self.target.scale[1] *= 2
+					self.target.moveSpeed = self.target.moveSpeed / 2
+				elif scroll < 0:
+					self.target.scale[0] /= 2
+					self.target.scale[1] /= 2
+					self.target.moveSpeed *= 2
+
 	
 	def SetTarget(self, target: TransformGameObject):
 		self.target = target

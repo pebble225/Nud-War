@@ -34,7 +34,7 @@ class GameInstance:
 		
 
 		self.window: Window = Window()
-		self.camera: Camera = Camera()
+		self.camera: Camera = Camera(self.dataBase)
 		self.camera.name = "camera"
 		self.camera.SetScale(10.0)
 		self.playerController: PlayerController = PlayerController()
@@ -103,6 +103,8 @@ class GameInstance:
 		self.renderer.FixedUpdate()
 
 		self.mapManager.UpdateAll()
+
+		self.playerController.ClearScrollEvent()
 
 	def main(self):
 		pygame.init()
