@@ -48,6 +48,9 @@ class Region(TransformGameObject):
 		return None
 
 	def WhichWayTo(self, region: Region) -> Portal | None:
+		"""
+		Returns the portal that connects two regions if one exists.
+		"""
 		direction = self.WhereIs(region)
 
 		if direction == Region.NORTH:

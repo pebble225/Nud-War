@@ -25,8 +25,22 @@ def divideVectors(vecA: tuple[float], vecB: tuple[float]):
 def minValue(a, b):
 	return a if a < b else b
 
+def minValue2(arr: list):
+	currentMin = arr[0]
+	for n in arr:
+		if n < currentMin:
+			currentMin = n
+	return currentMin
+
 def maxValue(a, b):
 	return a if a > b else b
+
+def maxValue2(arr: list):
+	currentMax = arr[0]
+	for n in arr:
+		if n > currentMax:
+			currentMax = n
+	return currentMax
 
 def dotProductSum(vecA: tuple[float], vecB: tuple[float]):
 	return vecA[0]*vecB[0]+vecA[1]*vecB[1]

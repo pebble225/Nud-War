@@ -32,6 +32,9 @@ class TransformGameObject(GameObject):
 		self.pos[1] = y
 	
 	def SetPosition2(self, pos: list[float, float]):
+		"""
+		Takes in a list instead of two floats for x and y.
+		"""
 		self.pos[0] = pos[0]
 		self.pos[1] = pos[1]
 	

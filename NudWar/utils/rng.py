@@ -69,5 +69,5 @@ class LCG(RNG):
 
 if __name__ == "__main__":
 	ran = LCG.NADS64bit()
-	for i in range(10):
-		print(ran.intRange(2, 4))
+	for i in range(100):
+		print(ran.intRange(1, 4) < 4)

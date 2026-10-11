@@ -10,7 +10,7 @@ class Window:
 		self.tickRate = 60.0
 	
 	def Init(self):
-		self.instance = pygame.display.set_mode(self.dim, pygame.NOFRAME)
+		self.instance = pygame.display.set_mode(self.dim, pygame.NOFRAME, display = 0)
 	
 	def GetInstance(self) -> pygame.surface.Surface:
 		return self.instance

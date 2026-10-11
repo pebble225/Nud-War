@@ -11,7 +11,17 @@ class BehaviorData:
 		Used when checking if objects are considered close enough to one another.
 		"""
 
+		self.PRECISE_DISTANCE_TOLERANCE = 0.01
+		"""
+		More precise distance tolerance used in moveTo actions.
+		"""
+
 		self.WANDER_SMALL_STEP_DISTANCE = 5 # meters
 		"""
 		During wandering, nuds will occassionally take small steps of this max length instead of random positions.
+		"""
+
+		self.WANDER_SPEED = 6 # meters / second
+		"""
+		The maximum speed nuds will move when wandering.
 		"""

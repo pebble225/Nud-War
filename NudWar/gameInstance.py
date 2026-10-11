@@ -1,4 +1,5 @@
 import pygame
+import os
 
 from NudWar.game.camera import Camera
 from NudWar.game.map import Map
@@ -107,6 +108,7 @@ class GameInstance:
 		self.playerController.ClearScrollEvent()
 
 	def main(self):
+		os.environ["SDL_VIDEODRIVER"] = "wayland"
 		pygame.init()
 
 		self.window.Init()

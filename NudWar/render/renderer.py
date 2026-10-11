@@ -56,7 +56,6 @@ class Renderer:
 			vertices[i] = vertex
 
 	def ToScreenSpace(self, delta: float, vertices: list[list[float, float]]):
-
 		cameraPos = self.camera.pos if self.camera.prevPos is None else [
 			self.camera.prevPos[0] + (self.camera.pos[0] - self.camera.prevPos[0]) * delta,
 			self.camera.prevPos[1] + (self.camera.pos[1] - self.camera.prevPos[1]) * delta,

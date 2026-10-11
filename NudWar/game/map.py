@@ -23,9 +23,11 @@ class Map(GameObject):
 		else:
 			return None
 
-	def GetUnweightedPath(self, start: Region, end: Region, allRegions: list[Region]):
+	def GetUnweightedPath(self, start: Region, end: Region):
 		if start is end:
 			return [start]
+
+		allRegions = self.GetAllRegions()
 
 		class PathObject(ABC):
 			def __init__(self, region: Region, cost: float = None, stepIndex: int = None, pathList: list[Region] = None):

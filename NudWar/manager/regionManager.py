@@ -27,7 +27,8 @@ class RegionManager:
 	def RealTimeUpdate(self, region: Region):
 		for obj in region.objects:
 			if isinstance(obj, Nud):
-				self.nudManager.Entry(obj, region)
+				#self.nudManager.Entry(obj, region)
+				self.nudManager.Entry(region, obj)
 
 	def CreateBasicNud(self, region: Region, x: float = 0, y: float = 0) -> Nud:
 			unitData = self.database.unitData
