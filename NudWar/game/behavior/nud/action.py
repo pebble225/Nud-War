@@ -4,7 +4,7 @@ from NudWar.game.gameObject import GameObject
 from abc import ABC, abstractmethod
 
 if TYPE_CHECKING:
-	from NudWar.game.nud import Nud
+	from NudWar.game.nuds.nud import Nud
 
 class Action(GameObject):
 	def __init__(self, parentAction: "Action" | None = None):

@@ -7,7 +7,7 @@ from NudWar.game.behavior.nud.idle import Idle
 from NudWar.game.behavior.nud.wander import Wander
 
 if TYPE_CHECKING:
-	from NudWar.game.nud import Nud
+	from NudWar.game.nuds.nud import Nud
 	from NudWar.game.map import Map
 	from NudWar.game.region import Region
 

@@ -4,7 +4,7 @@ from NudWar.game.behavior.nud.action import Action
 from NudWar.utils.timer import Timer
 
 if TYPE_CHECKING:
-	from NudWar.game.nud import Nud
+	from NudWar.game.nuds.nud import Nud
 
 class Idle(Action):
 	def __init__(self, gameTime: int, duration: int, whileIdle: Action | None = None, parentAction: Action | None = None):

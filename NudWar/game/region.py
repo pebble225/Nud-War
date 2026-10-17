@@ -1,8 +1,9 @@
 import weakref
 
 from NudWar.game.transformGameObject import TransformGameObject
+from NudWar.game.faction import Faction
 
-from NudWar.game.nud import Nud
+from NudWar.game.nuds.nud import Nud
 from NudWar.game.portal import Portal
 
 class Region(TransformGameObject):
@@ -20,6 +21,8 @@ class Region(TransformGameObject):
 		self.index = [int(x), int(y)]
 		self.SetScale(Region.SIZE)
 
+		self.faction = None
+
 		self.north: Region | None = None
 		self.east: Region | None = None
 		self.south: Region | None = None
@@ -31,6 +34,23 @@ class Region(TransformGameObject):
 		self.westPortal: Portal | None = None
 
 		self.objects = []
+
+	def SetFaction(self, faction: Faction):
+		self.faction = weakref.ref(faction)
+
+	def GetFaction(self) -> Faction | None:
+		if self.faction is None:
+			return None
+		return self.faction()
+
+	def HasFaction(self):
+		return self.faction is not None and self.faction() is not None
+
+	def GetColor(self):
+		if self.HasFaction():
+			return self.GetFaction().color
+		else:
+			return (255, 255, 255)
 
 	def WhereIs(self, region: "Region"):# might not be used
 		"""

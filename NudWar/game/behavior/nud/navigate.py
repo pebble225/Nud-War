@@ -5,7 +5,7 @@ from NudWar.game.behavior.nud.action import Action
 from NudWar.data.dataBase import DataBase
 
 if TYPE_CHECKING:
-	from NudWar.game.nud import Nud
+	from NudWar.game.nuds.nud import Nud
 	from NudWar.game.map import Map
 	from NudWar.game.region import Region
 

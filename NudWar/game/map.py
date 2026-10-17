@@ -12,6 +12,8 @@ class Map(GameObject):
 		super().__init__()
 		self.regions = {}
 
+		self.factions = []
+
 		self.mapData = mapData
 
 	def GetAllRegions(self) -> list[Region]:

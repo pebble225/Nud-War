@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-
+import weakref
 import uuid
 
 class GameObject(ABC):
@@ -7,4 +7,4 @@ class GameObject(ABC):
 		self.id = uuid.uuid1()
 
 	def GetID(self) -> uuid.UUID:
-		return self.id
+		return weakref.ref(self.id)

@@ -1,0 +1,2 @@
+class FactionManager:
+	pass

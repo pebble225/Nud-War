@@ -2,6 +2,7 @@ from NudWar.game.map import Map
 from NudWar.game.region import Region
 from NudWar.manager.regionManager import RegionManager
 from NudWar.game.portal import Portal
+from NudWar.game.faction import Faction
 
 from NudWar.data.dataBase import DataBase
 from NudWar.data.mapData import MapData
@@ -22,6 +23,9 @@ class MapManager:
 	
 	def GetAllRegions(self) -> list[Region]:
 		return self.map.GetAllRegions()
+
+	def AddFaction(self, faction: Faction):
+		self.map.factions.append(faction)
 	
 	def AddRegion(self, x: int, y: int) -> Region:
 		"""

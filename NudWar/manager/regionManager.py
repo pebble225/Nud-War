@@ -1,8 +1,9 @@
-#this could get merged with map manager depending on complexity
+import weakref
 
 from NudWar.game.gameObject import GameObject
 from NudWar.game.region import Region
-from NudWar.game.nud import Nud
+from NudWar.game.nuds.nud import Nud
+from NudWar.game.faction import Faction
 
 from NudWar.data.dataBase import DataBase
 from NudWar.data.unitData import UnitData
@@ -27,7 +28,6 @@ class RegionManager:
 	def RealTimeUpdate(self, region: Region):
 		for obj in region.objects:
 			if isinstance(obj, Nud):
-				#self.nudManager.Entry(obj, region)
 				self.nudManager.Entry(region, obj)
 
 	def CreateBasicNud(self, region: Region, x: float = 0, y: float = 0) -> Nud:

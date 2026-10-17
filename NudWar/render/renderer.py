@@ -6,8 +6,10 @@ import numpy as np
 from NudWar.game.region import Region
 from NudWar.game.map import Map
 from NudWar.game.camera import Camera
-from NudWar.game.nud import Nud
+from NudWar.game.nuds.nud import Nud
 from NudWar.game.portal import Portal
+from NudWar.game.faction import Faction
+from NudWar.game.resources.itemDrop import ItemDrop
 
 from NudWar.manager.mapManager import MapManager
 
@@ -71,7 +73,7 @@ class Renderer:
 			vertex[0] += center[0]
 			vertex[1] += center[1]
 
-	def RenderTopLeftBox(self, rect: tuple, color: tuple[int] = (255, 255, 255), rectWidth: int = 0):
+	def RenderTopLeftBox(self, delta: float, rect: tuple, color: tuple[int] = (255, 255, 255), rectWidth: int = 0):
 		"""
 		
 		"""
@@ -80,6 +82,11 @@ class Renderer:
 			return
 
 		center = self.window.GetCenter()
+
+		cameraPos = self.camera.pos if self.camera.prevPos is None else [
+			self.camera.prevPos[0] + (self.camera.pos[0] - self.camera.prevPos[0]) * delta,
+			self.camera.prevPos[1] + (self.camera.pos[1] - self.camera.prevPos[1]) * delta,
+		]
 
 		x = rect[0] + rect[2] if rect[2] < 0 else rect[0]
 		y = rect[1] + rect[3] if rect[3] < 0 else rect[1]
@@ -90,15 +97,15 @@ class Renderer:
 			self.window.GetInstance(),
 			color,
 			(
-				(x - self.camera.pos[0]) * self.camera.scale[0] + center[0],
-				(y - self.camera.pos[1]) * self.camera.scale[1] + center[1],
+				(x - cameraPos[0]) * self.camera.scale[0] + center[0],
+				(y - cameraPos[1]) * self.camera.scale[1] + center[1],
 				width * self.camera.scale[0],
 				height * self.camera.scale[1]
 			),
 			rectWidth
 		)
 	
-	def RenderSimpleNud(self, nud: Nud, region: Region, delta: float, color: tuple[int] = (255, 255, 255)):
+	def RenderSimpleNud(self, nud: Nud, region: Region, delta: float):
 		renderData = self.database.renderData
 		vertices = renderData.basicNudPrefab.GetMesh()
 		for vertex in vertices:
@@ -108,7 +115,7 @@ class Renderer:
 		self.ToGameSpace(vertices, region, nud)
 		self.ToScreenSpace(delta, vertices)
 		
-		pygame.draw.polygon(self.window.GetInstance(), color, vertices)
+		pygame.draw.polygon(self.window.GetInstance(), nud.GetColor(), vertices)
 
 	def RenderPortal(self, delta: float, portal: Portal, region: Region):
 		renderData = self.database.renderData
@@ -124,7 +131,14 @@ class Renderer:
 		center = center[0]
 
 		pygame.draw.polygon(self.window.GetInstance(), renderData.portalPrefab.PORTAL_TENDRIL_COLOR, mesh)
-		pygame.draw.circle(self.window.GetInstance(), renderData.portalPrefab.PORTAL_EPICENTER_COLOR, center, renderData.portalPrefab.PORTAL_EPICENTER_RADIUS * portal.GetW() * self.camera.GetW())
+		pygame.draw.circle(self.window.GetInstance(),
+		                   renderData.portalPrefab.PORTAL_EPICENTER_COLOR,
+						   center,
+						   renderData.portalPrefab.PORTAL_EPICENTER_RADIUS * portal.GetW() * self.camera.GetW()
+						   )
+
+	def RenderItemDrop(self, delta: float, itemDrop: ItemDrop):
+		pass
 
 	def FillBackground(self, color: tuple):
 		self.window.GetInstance().fill(color)
@@ -139,10 +153,11 @@ class Renderer:
 			1
 		)
 
-	def BorderRegionRender(self, region: Region):
+	def BorderRegionRender(self, delta: float, region: Region):
 		mapData = self.database.mapData
 
 		# keeping constants here instead of mapData because these might not be final game variables
+		# nah just move it bro -future pebble
 		GATE_WIDTH = 14
 		WALL_THICKNESS = 2
 
@@ -157,26 +172,28 @@ class Renderer:
 
 		GATED_WALL_LENGTH = int(REGION_SIZE/2 - GATE_WIDTH/2)
 
+		color = region.GetColor()
+
 		if region.HasNorth():
-			self.RenderTopLeftBox((*topLeft, GATED_WALL_LENGTH, WALL_THICKNESS))
-			self.RenderTopLeftBox((*topRight, -GATED_WALL_LENGTH, WALL_THICKNESS))
+			self.RenderTopLeftBox(delta, (*topLeft, GATED_WALL_LENGTH, WALL_THICKNESS), color)
+			self.RenderTopLeftBox(delta, (*topRight, -GATED_WALL_LENGTH, WALL_THICKNESS), color)
 		else:
-			self.RenderTopLeftBox((*topLeft, REGION_SIZE, WALL_THICKNESS))
+			self.RenderTopLeftBox(delta, (*topLeft, REGION_SIZE, WALL_THICKNESS), color)
 		if region.HasEast():
-			self.RenderTopLeftBox((*topRight, -WALL_THICKNESS, GATED_WALL_LENGTH))
-			self.RenderTopLeftBox((*bottomRight, -WALL_THICKNESS, -GATED_WALL_LENGTH))
+			self.RenderTopLeftBox(delta, (*topRight, -WALL_THICKNESS, GATED_WALL_LENGTH), color)
+			self.RenderTopLeftBox(delta, (*bottomRight, -WALL_THICKNESS, -GATED_WALL_LENGTH), color)
 		else:
-			self.RenderTopLeftBox((*topRight, -WALL_THICKNESS, REGION_SIZE))
+			self.RenderTopLeftBox(delta, (*topRight, -WALL_THICKNESS, REGION_SIZE), color)
 		if region.HasSouth():
-			self.RenderTopLeftBox((*bottomLeft, GATED_WALL_LENGTH, -WALL_THICKNESS))
-			self.RenderTopLeftBox((*bottomRight, -GATED_WALL_LENGTH, -WALL_THICKNESS))
+			self.RenderTopLeftBox(delta, (*bottomLeft, GATED_WALL_LENGTH, -WALL_THICKNESS), color)
+			self.RenderTopLeftBox(delta, (*bottomRight, -GATED_WALL_LENGTH, -WALL_THICKNESS), color)
 		else:
-			self.RenderTopLeftBox((*bottomLeft, REGION_SIZE, -WALL_THICKNESS))
+			self.RenderTopLeftBox(delta, (*bottomLeft, REGION_SIZE, -WALL_THICKNESS), color)
 		if region.HasWest():
-			self.RenderTopLeftBox((*topLeft, WALL_THICKNESS, GATED_WALL_LENGTH))
-			self.RenderTopLeftBox((*bottomLeft, WALL_THICKNESS, -GATED_WALL_LENGTH))
+			self.RenderTopLeftBox(delta, (*topLeft, WALL_THICKNESS, GATED_WALL_LENGTH), color)
+			self.RenderTopLeftBox(delta, (*bottomLeft, WALL_THICKNESS, -GATED_WALL_LENGTH), color)
 		else:
-			self.RenderTopLeftBox((*topLeft, WALL_THICKNESS, REGION_SIZE))
+			self.RenderTopLeftBox(delta, (*topLeft, WALL_THICKNESS, REGION_SIZE), color)
 
 	def RenderRegion(self, region: Region, delta: float):
 		"""
@@ -184,7 +201,7 @@ class Renderer:
 		Entry method for rendering a region. This includes the rendering of all objects within the region.
 		
 		"""
-		self.BorderRegionRender(region)
+		self.BorderRegionRender(delta, region)
 
 		objects = list(region.objects)
 

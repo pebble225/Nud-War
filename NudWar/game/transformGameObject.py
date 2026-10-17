@@ -97,6 +97,10 @@ class TransformGameObject(GameObject):
 		Move object in the direction of its left-side rotation by a distance
 		"""
 		self.NudgeRight(-distance)
+
+	def SetRotation(self, degree: float):
+		self.rot[0] = math.cos(degree)
+		self.rot[1] = math.sin(degree)
 	
 	def RotateByAngle(self, degree: float):
 		"""

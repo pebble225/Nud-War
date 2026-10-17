@@ -14,7 +14,7 @@ from NudWar.utils.rng import LCG
 from NudWar.utils.pumpy import *
 
 if TYPE_CHECKING:
-	from NudWar.game.nud import Nud
+	from NudWar.game.nuds.nud import Nud
 
 class Wander(Action):
 	def __init__(self, parentAction: Action | None = None):

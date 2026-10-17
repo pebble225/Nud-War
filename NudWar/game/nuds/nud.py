@@ -1,7 +1,11 @@
 from NudWar.game.transformGameObject import TransformGameObject
 
+from NudWar.game.faction import Faction
+
 from NudWar.game.behavior.nud.action import Action
 from NudWar.game.behavior.nud.moveTo import MoveTo
+
+import weakref
 
 class Nud(TransformGameObject):
 	def __init__(self, moveSpeed: float, rotationSpeed: float):
@@ -15,11 +19,27 @@ class Nud(TransformGameObject):
 
 		self.action: Action | None = None
 
+		self.faction: weakref.ReferenceType | None = None
+
 		# moveSpeed is measured in units per tick
 		# rotationSpeed is measured in degrees per tick
 
 		self.moveSpeed = moveSpeed
 		self.rotationSpeed = rotationSpeed
+
+	def SetFaction(self, faction: Faction):
+		self.faction = weakref.ref(faction)
+
+	def GetFaction(self) -> Faction | None:
+		if self.faction is None:
+			return None
+		return self.faction()
+
+	def GetColor(self) -> tuple[int, int, int]:
+		if self.faction is None or self.faction() is None:
+			return (255, 255, 255)
+		else:
+			return self.faction().color
 
 	def AddNewAction(self, action: Action):
 		self.action = action

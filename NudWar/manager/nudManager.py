@@ -1,4 +1,4 @@
-from NudWar.game.nud import Nud
+from NudWar.game.nuds.nud import Nud
 from NudWar.game.map import Map
 from NudWar.game.camera import Camera
 from NudWar.game.region import Region
@@ -192,5 +192,6 @@ class NudManager:
 
 	def Entry(self, region: Region, nud: Nud):
 		if nud.action is None:
-			nud.AddNewAction(Nomad())
+			nud.action = Nomad()
+
 		nud.action = self.ActionSwitch(region, nud, nud.action)

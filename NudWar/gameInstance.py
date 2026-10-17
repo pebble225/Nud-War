@@ -3,8 +3,9 @@ import os
 
 from NudWar.game.camera import Camera
 from NudWar.game.map import Map
-from NudWar.game.nud import Nud
+from NudWar.game.nuds.nud import Nud
 from NudWar.game.transformGameObject import TransformGameObject
+from NudWar.game.faction import Faction
 
 from NudWar.game.behavior.nud.moveTo import MoveTo
 from NudWar.game.behavior.nud.idle import Idle
@@ -43,7 +44,7 @@ class GameInstance:
 		self.map: Map = Map(self.mapData)
 		self.ran = LCG.NADS64bit()
 
-		self.camera.SetPosition(self.mapData.REGION_SIZE*2.0, self.mapData.REGION_SIZE*1.5)
+		self.camera.SetPosition(self.mapData.REGION_SIZE*0.5, self.mapData.REGION_SIZE*1.5)
 
 		self.renderer: Renderer = Renderer()
 		self.nudManager: NudManager = NudManager()
@@ -67,9 +68,8 @@ class GameInstance:
 			for x in range(4):
 				region = self.mapManager.AddRegion(x, y)
 				n = self.ran.intRange(1, 10)
-
 				for i in range(n):
-					self.regionManager.CreateBasicNud(region, 40, 40)
+					self.regionManager.CreateBasicNud(region, self.ran.intRange(20, 80), self.ran.intRange(20, 80))
 
 		self.mapManager.LinkHorizontal((0,0),(1,0))
 		self.mapManager.LinkVertical((1,0),(1,1))
@@ -88,6 +88,22 @@ class GameInstance:
 		self.mapManager.LinkVertical((2, 1), (2, 2))
 
 		self.mapManager.GeneratePortals()
+
+		"""
+		blueFaction = Faction((40, 100, 170))
+		redFaction = Faction((180, 40, 40))
+
+		self.mapManager.AddFaction(blueFaction)
+		self.mapManager.AddFaction(redFaction)
+
+		blueStart = self.map.GetRegion(0, 1)
+		blueStart.SetFaction(blueFaction)
+		nud = self.regionManager.CreateBasicNud(blueStart, 40, 40)
+		nud.SetFaction(blueFaction)
+
+		redStart = self.map.GetRegion(3, 1)
+		redStart.SetFaction(redFaction)
+		"""
 	
 	def Start(self):
 		self.BasicMap()
